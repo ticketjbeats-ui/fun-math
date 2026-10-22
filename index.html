@@ -99,7 +99,8 @@ main{max-width:760px;margin:0 auto;padding:4px 18px 40px}
 .menu-head h1{font-size:clamp(30px,6vw,42px);font-weight:700}
 .sub{color:var(--ink-soft);font-size:18px;max-width:52ch}
 .seg{display:flex;background:var(--card);border:2px solid var(--edge);border-radius:16px;padding:5px;gap:5px;margin-bottom:22px;box-shadow:0 4px 0 var(--edge)}
-.seg button{flex:1;min-height:50px;border:0;border-radius:11px;background:transparent;font-size:19px;font-weight:600}
+.seg{flex-wrap:wrap}
+.seg button{flex:1 1 90px;min-height:50px;border:0;border-radius:11px;background:transparent;font-size:19px;font-weight:600}
 .seg button.on{background:var(--ink);color:var(--card)}
 .games{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
 .tile{position:relative;text-align:left;display:flex;flex-direction:column;gap:6px;padding:20px 18px 18px 22px;background:var(--card);border:2px solid var(--edge);border-radius:16px;box-shadow:0 5px 0 var(--edge);overflow:hidden}
@@ -179,6 +180,33 @@ main{max-width:760px;margin:0 auto;padding:4px 18px 40px}
 .bubble.right{outline:5px solid var(--sun);outline-offset:3px}
 .nextrow{display:flex;justify-content:center}
 
+/* monster battle */
+.arena{display:flex;align-items:center;gap:14px;background:var(--card);border:2px solid var(--edge);border-radius:16px;box-shadow:0 5px 0 var(--edge);padding:12px 16px}
+.monster{font-size:64px;line-height:1}
+.arena .info{flex:1;display:flex;flex-direction:column;gap:6px}
+.arena .mname{font-size:20px;font-weight:700}
+.fill.hp{background:var(--grape)}
+.hearts{flex:1;text-align:center;font-size:24px;letter-spacing:3px}
+@media (prefers-reduced-motion:no-preference){
+  .monster.hit{animation:hit .4s}
+  .monster.atk{animation:atk .4s}
+}
+@keyframes hit{30%{transform:scale(.8) rotate(-12deg);filter:brightness(2)}}
+@keyframes atk{40%{transform:scale(1.35) translateY(8px)}}
+.dots i.m{background:var(--mint)}
+.dots i.x{opacity:.22}
+
+/* trophies */
+.trophies{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.trophy{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:16px 10px;background:var(--card);border:2px solid var(--edge);border-radius:16px;box-shadow:0 4px 0 var(--edge)}
+.trophy .ti{font-size:44px;line-height:1}
+.trophy b{font-size:18px}
+.trophy small{font-size:15px;color:var(--ink-soft);line-height:1.3}
+.trophy.locked{box-shadow:none;border-style:dashed;border-color:var(--ink-soft)}
+.trophy.locked .ti{filter:grayscale(1);opacity:.35}
+.newt{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.newt span{background:var(--warn-bg);border:2px solid var(--edge);border-radius:12px;padding:6px 14px;font-size:19px;font-weight:600}
+
 /* results */
 .results{text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:10px}
 .big{font-size:clamp(80px,22vw,140px);font-weight:700;line-height:1;color:var(--sky)}
@@ -234,17 +262,33 @@ main{max-width:760px;margin:0 auto;padding:4px 18px 40px}
 
 <script>
 const LEVELS = {
-  starter:   {label:'Starter',   grades:'Good for grades 1–2', desc:'Facts up to 5 × 5, with dot pictures to help', max:5,  visual:true,  sprint:90},
-  builder:   {label:'Builder',   grades:'Good for grade 3',    desc:'Facts up to 10 × 10',                          max:10, visual:false, sprint:60},
-  pro:       {label:'Pro',       grades:'Good for grades 4–5', desc:'All the facts up to 12 × 12',                  max:12, visual:false, sprint:60},
-  challenge: {label:'Challenge', grades:'Good for grade 5 and up', desc:'Big ones like 34 × 6 and 96 ÷ 4, mixed with the 12s', max:12, visual:false, sprint:90}
+  starter:   {label:'Starter',   grades:'Good for grades 1–2', desc:'Adding and taking away up to 10, times facts up to 5 × 5, with dot pictures to help', max:5,  addMax:10, visual:true,  sprint:90},
+  builder:   {label:'Builder',   grades:'Good for grade 3',    desc:'Adding up to 20 and facts up to 10 × 10',      max:10, addMax:20, visual:false, sprint:60},
+  pro:       {label:'Pro',       grades:'Good for grades 4–5', desc:'Two-digit adding and all the facts up to 12 × 12', max:12, addMax:99, visual:false, sprint:60},
+  challenge: {label:'Challenge', grades:'Good for grade 5 and up', desc:'Big ones like 34 × 6, 96 ÷ 4 and 358 + 467', max:12, addMax:999, visual:false, sprint:90}
 };
 const EMOJIS = ['🦊','🚀','🦖','🐼','🦄','🐙','🐯','⚽','🌈','🐸','🦈','🍕'];
 const KEY = 'funmath:v1';
+const OPS = [['add','+ Add'],['sub','− Subtract'],['mul','× Multiply'],['div','÷ Divide']];
+const MONSTERS = [['👾','Zorp the Glitch'],['🐲','Sir Dragonsnack'],['👹','Grumbleface'],['🦑','Professor Squid'],['🤖','Robo-Muncher'],['👻','Boo Barry']];
+const TROPHIES = [
+  {id:'first',  e:'🎉', name:'First game',    desc:'Finish your first game',            test:p => p.games >= 1},
+  {id:'s50',    e:'⭐', name:'Star collector', desc:'Earn 50 stars',                     test:p => p.stars >= 50},
+  {id:'s250',   e:'🌟', name:'Superstar',      desc:'Earn 250 stars',                    test:p => p.stars >= 250},
+  {id:'s1000',  e:'💫', name:'Galaxy brain',   desc:'Earn 1,000 stars',                  test:p => p.stars >= 1000},
+  {id:'streak10',e:'🔥',name:'On fire',        desc:'Get 10 right in a row',             test:(p,g) => g && g.bestStreak >= 10},
+  {id:'perfect',e:'💯', name:'Perfect 10',     desc:'Get all 10 right on the first try', test:(p,g) => g && g.type !== 'sprint' && g.type !== 'boss' && g.score === 10},
+  {id:'boss',   e:'⚔️', name:'Monster tamer',  desc:'Win a monster battle',              test:p => p.wins >= 1},
+  {id:'boss5',  e:'🏰', name:'Hero of the land', desc:'Win 5 monster battles',          test:p => p.wins >= 5},
+  {id:'allops', e:'🧮', name:'All-rounder',    desc:'Play with +, −, × and ÷',            test:p => OPS.every(([k]) => p.ops[k])},
+  {id:'days3',  e:'📅', name:'Three days',     desc:'Play 3 days in a row',              test:p => p.days.streak >= 3},
+  {id:'days7',  e:'🗓️', name:'Week warrior',   desc:'Play 7 days in a row',              test:p => p.days.streak >= 7},
+  {id:'know25', e:'🧠', name:'Fact master',    desc:'Know 25 facts really well',         test:p => Object.values(p.facts).filter(f => f.r >= 2 && f.r/(f.r+f.w) >= .9).length >= 25}
+];
 const PRAISE = ['Nice!','Yes!','You got it!','Boom!','Great job!','Correct!','Way to go!'];
 
 function newPlayer(name, emoji, level){
-  return {id:'p'+Math.random().toString(36).slice(2,9), name, emoji, level, stars:0, best:{}, facts:{}};
+  return {id:'p'+Math.random().toString(36).slice(2,9), name, emoji, level, stars:0, best:{}, facts:{}, trophies:{}, games:0, wins:0, ops:{}, days:{last:'', streak:0}};
 }
 function load(){
   try{
@@ -252,7 +296,11 @@ function load(){
     if(raw){
       const d = JSON.parse(raw);
       if(d && Array.isArray(d.players) && d.players.length){
-        d.players.forEach(p => { if(p.name === 'Player 1') p.name = 'Ana'; else if(p.name === 'Player 2') p.name = 'Vanessa'; });
+        d.players.forEach(p => {
+          if(p.name === 'Player 1') p.name = 'Ana'; else if(p.name === 'Player 2') p.name = 'Vanessa';
+          p.trophies = p.trophies || {}; p.games = p.games || 0; p.wins = p.wins || 0; p.ops = p.ops || {};
+          p.days = p.days || {last:'', streak:0};
+        });
         return d;
       }
     }
@@ -359,16 +407,19 @@ function renderMenu(){
   const best = p.best[`${op}:${p.level}`] || 0;
   const tiles = {
     pop:   `<button class="tile" style="--acc:var(--grape)" data-act="game" data-game="pop"><span class="ti">🫧</span><h2>Bubble pop</h2><p>Tap the bubble with the right answer. 10 questions.</p></button>`,
+    boss:  `<button class="tile" style="--acc:var(--tomato)" data-act="game" data-game="boss"><span class="ti">⚔️</span><h2>Monster battle</h2><p>Every right answer zaps the monster. You have 3 hearts!</p><span class="best">${p.wins ? `Monsters beaten: ${p.wins}` : 'Beat your first monster'}</span></button>`,
     sprint:`<button class="tile" style="--acc:var(--sky)" data-act="game" data-game="sprint"><span class="ti">⏱️</span><h2>Speed sprint</h2><p>Answer as many as you can in ${L.sprint} seconds.</p><span class="best">${best ? `Your best: ${best}` : 'Set your first best score'}</span></button>`,
     build: `<button class="tile" style="--acc:var(--mint)" data-act="game" data-game="build"><span class="ti">🧱</span><h2>Fact builder</h2><p>Practice the facts you miss most. No timer, with help when you need it.</p></button>`,
-    map:   `<button class="tile" style="--acc:var(--sun)" data-act="map"><span class="ti">🗺️</span><h2>My facts</h2><p>See which facts you know and which need practice.</p></button>`
+    map:   `<button class="tile" style="--acc:var(--sun)" data-act="map"><span class="ti">🗺️</span><h2>My facts</h2><p>See which facts you know and which need practice.</p></button>`,
+    trophy:`<button class="tile" style="--acc:var(--grape)" data-act="trophies"><span class="ti">🏆</span><h2>Trophies</h2><p>${Object.keys(p.trophies).length} of ${TROPHIES.length} won. Can you get them all?</p></button>`
   };
-  const order = p.level === 'starter' ? ['pop','build','sprint','map'] : ['sprint','pop','build','map'];
+  const order = p.level === 'starter' ? ['pop','boss','build','sprint','map','trophy'] : ['sprint','boss','pop','build','map','trophy'];
+  const today = dayStr(0), streakOn = p.days.last === today || p.days.last === dayStr(-1);
   $app.innerHTML = `
   <section class="menu-head"><span class="avatar big">${p.emoji}</span>
-    <div><h1>Hi, ${esc(p.name)}!</h1><p class="sub">${L.label} level: ${L.desc}.</p></div></section>
+    <div><h1>Hi, ${esc(p.name)}!</h1><p class="sub">${L.label} level: ${L.desc}.</p>${streakOn && p.days.streak > 1 ? `<p class="sub"><b>📅 ${p.days.streak}-day streak!</b> Play today to keep it going.</p>` : ''}</div></section>
   <div class="seg" role="radiogroup" aria-label="What to practice">
-    ${[['mul','× Multiply'],['div','÷ Divide'],['mix','Mix it up']].map(([k,t]) => `<button role="radio" aria-checked="${op===k}" class="${op===k?'on':''}" data-act="op" data-op="${k}">${t}</button>`).join('')}
+    ${[...OPS,['mix','Mix it up']].map(([k,t]) => `<button role="radio" aria-checked="${op===k}" class="${op===k?'on':''}" data-act="op" data-op="${k}">${t}</button>`).join('')}
   </div>
   <div class="games">${order.map((k,i) => i===0 ? tiles[k].replace('class="tile"','class="tile first"').replace('<h2>','<span class="tag">Start here</span><h2>') : tiles[k]).join('')}</div>`;
   renderHeader();
@@ -377,8 +428,15 @@ function renderMenu(){
 /* ---------- questions ---------- */
 function mkMul(a,b){ return {op:'mul', a, b, ans:a*b, sym:'×', key:`mul:${a}:${b}`}; }
 function mkDiv(dividend, b){ const q = dividend / b; return {op:'div', a:dividend, b, ans:q, sym:'÷', key:`div:${b}:${q}`}; }
+function mkAdd(a,b){ return {op:'add', a, b, ans:a+b, sym:'+', key:`add:${a}:${b}`}; }
+function mkSub(total, b){ const d = total - b; return {op:'sub', a:total, b, ans:d, sym:'−', key:`sub:${b}:${d}`}; }
 function makeQ(level, opSel){
-  const o = opSel === 'mix' ? (Math.random() < .5 ? 'mul' : 'div') : opSel;
+  const o = opSel === 'mix' ? OPS[ri(0,3)][0] : opSel;
+  if(o === 'add' || o === 'sub'){
+    const m = LEVELS[level].addMax, lo = m >= 999 ? 100 : m >= 99 ? 10 : 0;
+    const x = ri(lo, m), y = ri(m >= 999 ? 10 : lo, m);
+    return o === 'add' ? mkAdd(x, y) : mkSub(x + y, Math.random() < .5 ? x : y);
+  }
   if(level === 'challenge' && Math.random() < .6){
     if(o === 'mul') return mkMul(ri(11,99), ri(2,9));
     const b = ri(2,9); return mkDiv(b * ri(11,25), b);
@@ -389,15 +447,16 @@ function makeQ(level, opSel){
   const b = ri(1, max); return mkDiv(b * f(), b);
 }
 function pickWeak(){
-  const ops = G.op === 'mix' ? ['mul','div'] : [G.op];
-  const max = G.L.max, big = G.p.level === 'challenge';
+  const ops = G.op === 'mix' ? OPS.map(o => o[0]) : [G.op];
+  const big = G.p.level === 'challenge';
   const weak = Object.entries(G.p.facts).filter(([k,v]) => {
     const [o,x,y] = k.split(':');
+    const max = o === 'add' || o === 'sub' ? G.L.addMax : G.L.max;
     return ops.includes(o) && (big || (+x <= max && +y <= max)) && v.w > 0 && v.r / (v.r + v.w) < .85;
   });
   if(!weak.length) return null;
   const [o,x,y] = weak[ri(0, weak.length-1)][0].split(':');
-  return o === 'mul' ? mkMul(+x, +y) : mkDiv(+x * +y, +x);
+  return o === 'mul' ? mkMul(+x, +y) : o === 'div' ? mkDiv(+x * +y, +x) : o === 'add' ? mkAdd(+x, +y) : mkSub(+x + +y, +x);
 }
 function choices(q){
   const a = q.ans, set = new Set([a]);
@@ -409,6 +468,19 @@ function choices(q){
 
 /* ---------- help pictures ---------- */
 function helpHTML(q, reveal){
+  if(q.op === 'add' || q.op === 'sub'){
+    const total = q.op === 'add' ? q.ans : q.a;
+    if(total > 0 && total <= 20){
+      const dots = q.op === 'add' ? '<i></i>'.repeat(q.a) + '<i class="m"></i>'.repeat(q.b) : '<i></i>'.repeat(q.ans) + '<i class="x"></i>'.repeat(q.b);
+      const note = q.op === 'add' ? `${q.a} and ${q.b} more${reveal ? ` makes <b>${q.ans}</b>` : '. How many dots?'}`
+                                  : `${q.a} dots, take away ${q.b}${reveal ? ` leaves <b>${q.ans}</b>` : '. How many are left?'}`;
+      return `<div class="dots" style="--cols:${Math.min(10,total)};--d:18px" aria-hidden="true">${dots}</div><p class="vis-note">${note}</p>`;
+    }
+    if(!reveal) return '';
+    if(q.op === 'sub') return `<p class="think">Count up:<br>${q.b} + ? = ${q.a}<br>${q.b} + ${q.ans} = ${q.a}, so the answer is <b>${q.ans}</b></p>`;
+    const ta = q.a - q.a % 10, tb = q.b - q.b % 10, oa = q.a % 10, ob = q.b % 10;
+    return `<p class="think">Tens and ones:<br>${ta} + ${tb} = ${ta+tb}<br>${oa} + ${ob} = ${oa+ob}<br>${ta+tb} + ${oa+ob} = <b>${q.ans}</b></p>`;
+  }
   if(q.op === 'mul'){
     if(q.a === 0 || q.b === 0) return reveal ? `<p class="think">Anything times 0 is <b>0</b>.</p>` : '';
     if(q.a * q.b <= 60 && q.b <= 12){
@@ -443,7 +515,9 @@ function startGame(type){
   const p = cur(); if(!p) return renderHome();
   endGame();
   const L = LEVELS[p.level];
-  G = {type, op, p, L, score:0, wrong:0, streak:0, bestStreak:0, n:0, total: type==='sprint' ? Infinity : 10,
+  const [mon, monName] = MONSTERS[ri(0, MONSTERS.length-1)];
+  G = {type, op, p, L, score:0, wrong:0, streak:0, bestStreak:0, n:0, total: type==='sprint' || type==='boss' ? Infinity : 10,
+       hp:10, hearts:3, mon, monName,
        input:'', locked:false, firstTry:true, last:null, earned:0, missed:[], queue:[], done:false, awaitNext:false};
   view = 'game';
   const typed = type !== 'pop';
@@ -453,9 +527,12 @@ function startGame(type){
       <button class="link" data-act="quit">Quit</button>
       ${type === 'sprint'
         ? `<div class="timer" role="timer" aria-label="Time left"><div class="track"><div class="fill" id="fill" style="width:100%"></div></div><span class="secs" id="secs">${L.sprint}</span></div>`
+        : type === 'boss' ? `<div class="hearts" id="hearts" aria-label="Hearts left"></div>`
         : `<div class="pips" id="pips" aria-hidden="true">${'<i></i>'.repeat(10)}</div>`}
       <div class="score" aria-label="Correct answers">⭐ <span id="score">0</span></div>
     </div>
+    ${type === 'boss' ? `<div class="arena"><span class="monster" id="monster" aria-hidden="true">${G.mon}</span>
+      <div class="info"><span class="mname">${G.monName}</span><div class="track"><div class="fill hp" id="hp" style="width:100%"></div></div></div></div>` : ''}
     <div class="qcard" id="qcard" aria-live="polite"><div class="qtext" id="qtext"></div><div class="answer" id="answer"></div></div>
     <div class="streak" id="streak"></div>
     <div class="feedback" id="feedback" aria-live="polite"></div>
@@ -472,7 +549,7 @@ function startGame(type){
 }
 function nextQ(){
   if(!G || G.done || view !== 'game') return;
-  if(G.n >= G.total) return finish();
+  if(G.n >= G.total || (G.type === 'boss' && (G.hp <= 0 || G.hearts <= 0))) return finish();
   let q = null;
   const due = G.queue.findIndex(x => x.at <= G.n);
   if(due > -1) q = G.queue.splice(due,1)[0].q;
@@ -502,6 +579,9 @@ function updateHud(){
   $('#score').textContent = G.score;
   const pips = $('#pips');
   if(pips) [...pips.children].forEach((el,i) => el.className = i < G.n ? 'done' : (i === G.n ? 'now' : ''));
+  const hearts = $('#hearts'), hp = $('#hp');
+  if(hearts) hearts.textContent = '❤️'.repeat(G.hearts) + '🖤'.repeat(3 - G.hearts);
+  if(hp) hp.style.width = (G.hp * 10) + '%';
   $('#streak').textContent = G.streak >= 3 ? `🔥 ${G.streak} in a row` : '';
 }
 function press(k){
@@ -533,12 +613,14 @@ function check(v){
     card.className = 'qcard good';
     $('#answer').textContent = q.ans; $('#answer').classList.remove('empty');
     $('#feedback').textContent = G.streak > 0 && G.streak % 5 === 0 ? `${G.streak} in a row! 🔥` : PRAISE[ri(0, PRAISE.length-1)];
+    if(G.type === 'boss'){ G.hp--; bump('hit'); if(G.hp <= 0) $('#feedback').textContent = `You beat ${G.monName}! 🎉`; }
     sound('good'); updateHud(); save();
     setTimeout(nextQ, G.type === 'sprint' ? 300 : 750);
     return;
   }
   if(G.firstTry){ record(q, false); G.wrong++; if(!G.missed.some(m => m.key === q.key)) G.missed.push(q); }
   G.firstTry = false; G.streak = 0;
+  if(G.type === 'boss'){ G.hearts--; bump('atk'); }
   card.className = 'qcard'; void card.offsetWidth; card.className = 'qcard bad';
   sound('bad'); updateHud(); save();
   if(G.type === 'pop'){
@@ -549,12 +631,16 @@ function check(v){
   G.locked = true; G.n++;
   $('#answer').textContent = q.ans; $('#answer').className = 'answer reveal';
   $('#feedback').textContent = `${q.a} ${q.sym} ${q.b} = ${q.ans}`;
-  if(G.type === 'sprint'){ setTimeout(nextQ, 1300); return; }
+  if(G.type === 'sprint' || G.type === 'boss'){ setTimeout(nextQ, 1300); return; }
   G.queue.push({q, at: G.n + 2});
   $('#visual').innerHTML = helpHTML(q, true);
   G.awaitNext = true;
   $('#nextrow').innerHTML = `<button class="btn go" data-act="next">Got it, next one</button>`;
   $('#nextrow button').focus();
+}
+function bump(cls){
+  const m = $('#monster'); if(!m) return;
+  m.classList.remove('hit','atk'); void m.offsetWidth; m.classList.add(cls);
 }
 function goNext(){ if(G && G.awaitNext){ G.awaitNext = false; nextQ(); } }
 
@@ -578,12 +664,45 @@ function finish(){
     const k = `${G.op}:${p.level}`; prevBest = p.best[k] || 0;
     if(G.score > prevBest){ p.best[k] = G.score; newBest = true; }
   }
+  G.won = G.type === 'boss' && G.hp <= 0;
+  if(G.won){ p.wins++; p.stars += 5; G.earned += 5; }
+  p.games++;
+  (G.op === 'mix' ? OPS.map(o => o[0]) : [G.op]).forEach(o => p.ops[o] = true);
+  const today = dayStr(0);
+  if(p.days.last !== today){ p.days.streak = p.days.last === dayStr(-1) ? p.days.streak + 1 : 1; p.days.last = today; }
+  G.newTrophies = TROPHIES.filter(t => !p.trophies[t.id] && t.test(p, G));
+  G.newTrophies.forEach(t => p.trophies[t.id] = true);
   save(); sound('done');
   renderResults(newBest, prevBest);
-  if(G.score > 0) confetti();
+  if(G.score > 0 && (G.type !== 'boss' || G.won)) confetti();
+}
+function dayStr(offset){
+  const d = new Date(); d.setDate(d.getDate() + offset);
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
 }
 function renderResults(newBest, prevBest){
   view = 'results';
+  const trophies = G.newTrophies.length ? `<p class="sub">🏆 New trophy!</p><div class="newt">${G.newTrophies.map(t => `<span>${t.e} ${t.name}</span>`).join('')}</div>` : '';
+  if(G.type === 'boss'){
+    $app.innerHTML = `
+    <section class="results">
+      ${G.won ? '<span class="badge">Victory!</span>' : ''}
+      <div class="big" aria-hidden="true">${G.won ? '🏆' : G.mon}</div>
+      <h1>${G.won ? `You beat ${G.monName}!` : `${G.monName} got away!`}</h1>
+      <p class="sub">${G.won ? `You zapped it with ${G.score} right answers and won 5 bonus stars.` : `You zapped it ${G.score} times. It only had ${G.hp} hits left. Try again!`}</p>
+      <div class="statline">
+        <div class="stat"><b>+${G.earned} ⭐</b><span>stars earned</span></div>
+        <div class="stat"><b>🔥 ${G.bestStreak}</b><span>longest streak</span></div>
+      </div>
+      ${trophies}
+      ${G.missed.length ? `<p class="sub">Facts to practice:</p><div class="missed">${G.missed.slice(0,8).map(q => `<span>${q.a} ${q.sym} ${q.b} = ${q.ans}</span>`).join('')}</div>` : ''}
+      <div class="row" style="justify-content:center;margin-top:8px">
+        <button class="btn go" data-act="again">${G.won ? 'Fight another' : 'Try again'}</button>
+        <button class="btn" data-act="menu">Pick a game</button>
+      </div>
+    </section>`;
+    return renderHeader();
+  }
   const total = G.type === 'sprint' ? null : 10;
   const pct = total ? G.score / total : 1;
   const msg = G.type === 'sprint'
@@ -599,6 +718,7 @@ function renderResults(newBest, prevBest){
       <div class="stat"><b>+${G.earned} ⭐</b><span>stars earned</span></div>
       <div class="stat"><b>🔥 ${G.bestStreak}</b><span>longest streak</span></div>
     </div>
+    ${trophies}
     ${G.missed.length ? `<p class="sub">Facts to practice:</p><div class="missed">${G.missed.slice(0,8).map(q => `<span>${q.a} ${q.sym} ${q.b} = ${q.ans}</span>`).join('')}</div>` : ''}
     <div class="row" style="justify-content:center;margin-top:8px">
       <button class="btn go" data-act="again">Play again</button>
@@ -612,36 +732,50 @@ function renderResults(newBest, prevBest){
 function renderMap(){
   const p = cur(); if(!p) return renderHome();
   endGame(); view = 'map';
-  const max = LEVELS[p.level].max;
-  const isMul = mapOp === 'mul';
+  const isAS = mapOp === 'add' || mapOp === 'sub';
+  const max = isAS ? 10 : LEVELS[p.level].max;
+  const sym = {add:'+', sub:'−', mul:'×', div:'÷'}[mapOp];
   const rows = []; let known = 0, count = 0;
-  const start = isMul ? 0 : 1;
+  const start = mapOp === 'div' ? 1 : 0;
   for(let r = start; r <= max; r++){
     let cells = '';
     for(let c = 0; c <= max; c++){
-      const key = isMul ? `mul:${r}:${c}` : `div:${r}:${c}`;
+      const key = `${mapOp}:${r}:${c}`;
+      const val = isAS ? r + c : r * c;
       const f = p.facts[key]; count++;
       let cls = '';
       if(f){ const acc = f.r / (f.r + f.w); cls = acc >= .9 && f.r >= 2 ? 'g' : acc < .6 ? 'b' : 'w'; if(cls === 'g') known++; }
-      const label = isMul ? `${r} × ${c} = ${r*c}` : `${r*c} ÷ ${r} = ${c}`;
-      cells += `<td class="${cls}" title="${label}" aria-label="${label}">${isMul ? r*c : r*c}</td>`;
+      const label = mapOp === 'mul' || mapOp === 'add' ? `${r} ${sym} ${c} = ${val}` : `${val} ${sym} ${r} = ${c}`;
+      cells += `<td class="${cls}" title="${label}" aria-label="${label}">${val}</td>`;
     }
     rows.push(`<tr><th scope="row">${r}</th>${cells}</tr>`);
   }
   $app.innerHTML = `
   <section class="menu-head"><span class="avatar big">${p.emoji}</span><div><h1>${esc(p.name)}’s facts</h1>
-    <p class="sub">${isMul ? 'Each square is a times fact. Row times column.' : 'Each square is a divide fact. The square’s number divided by its row gives the column.'}</p></div></section>
+    <p class="sub">${{mul:'Each square is a times fact. Row times column.', div:'Each square is a divide fact. The square’s number divided by its row gives the column.',
+      add:'Each square is an adding fact. Row plus column.', sub:'Each square is a take-away fact. The square’s number minus its row gives the column.'}[mapOp]}</p></div></section>
   <div class="seg" role="radiogroup" aria-label="Which facts">
-    <button role="radio" aria-checked="${isMul}" class="${isMul?'on':''}" data-act="mapop" data-op="mul">× Multiply</button>
-    <button role="radio" aria-checked="${!isMul}" class="${!isMul?'on':''}" data-act="mapop" data-op="div">÷ Divide</button>
+    ${OPS.map(([k,t]) => `<button role="radio" aria-checked="${mapOp===k}" class="${mapOp===k?'on':''}" data-act="mapop" data-op="${k}">${t}</button>`).join('')}
   </div>
   <p class="mapsum">You know <b>${known}</b> of ${count} facts.</p>
-  <div class="mapwrap"><table class="map"><thead><tr><th class="corner">${isMul ? '×' : '÷'}</th>${Array.from({length:max+1},(_,i)=>`<th scope="col">${i}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>
+  <div class="mapwrap"><table class="map"><thead><tr><th class="corner">${sym}</th>${Array.from({length:max+1},(_,i)=>`<th scope="col">${i}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>
   <div class="legend"><span><i style="background:var(--mint)"></i>Know it</span><span><i style="background:var(--sun)"></i>Getting there</span><span><i style="background:var(--tomato)"></i>Needs practice</span><span><i style="background:var(--empty)"></i>Not tried yet</span></div>
   <div class="row" style="justify-content:center;margin-top:14px">
     <button class="btn go" data-act="practice-map">Practice my tricky facts</button>
     <button class="btn" data-act="menu">Back to games</button>
   </div>`;
+  renderHeader();
+}
+
+/* ---------- trophies ---------- */
+function renderTrophies(){
+  const p = cur(); if(!p) return renderHome();
+  endGame(); view = 'trophies';
+  $app.innerHTML = `
+  <section class="menu-head"><span class="avatar big">${p.emoji}</span><div><h1>${esc(p.name)}’s trophies</h1>
+    <p class="sub">You’ve won ${Object.keys(p.trophies).length} of ${TROPHIES.length}. Games played: ${p.games}. Monsters beaten: ${p.wins}.</p></div></section>
+  <div class="trophies">${TROPHIES.map(t => `<div class="trophy ${p.trophies[t.id] ? '' : 'locked'}"><span class="ti">${t.e}</span><b>${t.name}</b><small>${t.desc}</small></div>`).join('')}</div>
+  <div class="row" style="justify-content:center;margin-top:20px"><button class="btn" data-act="menu">Back to games</button></div>`;
   renderHeader();
 }
 
@@ -682,7 +816,8 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if(!b) return;
   switch(b.dataset.act){
     case 'home': renderHome(); break;
-    case 'pick': S.current = b.dataset.id; save(); renderMenu(); break;
+    case 'pick': S.current = b.dataset.id; op = cur().level === 'starter' ? 'add' : 'mul'; save(); renderMenu(); break;
+    case 'trophies': renderTrophies(); break;
     case 'edit': renderEdit(b.dataset.id); break;
     case 'add': renderEdit(null); break;
     case 'save-player': savePlayer(); break;
@@ -690,7 +825,7 @@ document.addEventListener('click', e => {
     case 'menu': renderMenu(); break;
     case 'op': op = b.dataset.op; renderMenu(); break;
     case 'game': startGame(b.dataset.game); break;
-    case 'map': mapOp = op === 'div' ? 'div' : 'mul'; renderMap(); break;
+    case 'map': mapOp = op === 'mix' ? 'mul' : op; renderMap(); break;
     case 'mapop': mapOp = b.dataset.op; renderMap(); break;
     case 'practice-map': op = mapOp; startGame('build'); break;
     case 'key': press(b.dataset.k); break;
