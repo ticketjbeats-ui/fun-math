@@ -297,7 +297,7 @@ function load(){
       const d = JSON.parse(raw);
       if(d && Array.isArray(d.players) && d.players.length){
         d.players.forEach(p => {
-          if(p.name === 'Player 1') p.name = 'Ana'; else if(p.name === 'Player 2') p.name = 'Vanessa';
+          if(p.name === 'Player 1' || p.name === 'Ana') p.name = 'Anna'; else if(p.name === 'Player 2') p.name = 'Vanessa';
           p.trophies = p.trophies || {}; p.games = p.games || 0; p.wins = p.wins || 0; p.ops = p.ops || {};
           p.days = p.days || {last:'', streak:0};
         });
@@ -305,7 +305,7 @@ function load(){
       }
     }
   }catch(e){}
-  return {players:[newPlayer('Ana','🦊','starter'), newPlayer('Vanessa','🚀','pro')], sound:true, current:null};
+  return {players:[newPlayer('Anna','🦊','starter'), newPlayer('Vanessa','🚀','pro')], sound:true, current:null};
 }
 let S = load();
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
