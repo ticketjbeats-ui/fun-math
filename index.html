@@ -258,6 +258,22 @@ main{max-width:760px;margin:0 auto;padding:4px 18px 40px}
 .legend i{display:inline-block;width:18px;height:18px;border-radius:5px;vertical-align:-3px;margin-right:6px;border:1px solid var(--rule)}
 .mapsum{font-size:20px;margin:6px 0 16px}
 
+/* right-answer explosion */
+.boom-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:60}
+.boom{position:absolute;width:0;height:0}
+.boom span{position:absolute;left:0;top:0;line-height:1;transform:translate(-50%,-50%)}
+.boom .bang{font-size:120px;animation:bang .7s ease-out forwards}
+.boom .word{font-size:46px;font-weight:700;white-space:nowrap;color:var(--sun);-webkit-text-stroke:2px #1D2B53;paint-order:stroke fill;text-shadow:0 4px 0 #1D2B53;animation:word 1s ease-out forwards}
+.boom .bit{font-size:32px;animation:fly .9s cubic-bezier(.15,.7,.3,1) both}
+@keyframes bang{0%{transform:translate(-50%,-50%) scale(.2) rotate(-30deg)}55%{transform:translate(-50%,-50%) scale(1.3) rotate(8deg);opacity:1}100%{transform:translate(-50%,-50%) scale(1.7);opacity:0}}
+@keyframes word{0%{transform:translate(-50%,-50%) scale(.2) rotate(-25deg);opacity:0}25%{transform:translate(-50%,-50%) scale(1.25) rotate(-8deg);opacity:1}45%{transform:translate(-50%,-50%) scale(1) rotate(-8deg)}75%{opacity:1}100%{transform:translate(-50%,-140%) rotate(-8deg);opacity:0}}
+@keyframes fly{0%{transform:translate(-50%,-50%) scale(.3)}70%{opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.1) rotate(var(--r));opacity:0}}
+@keyframes fade{0%,70%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  .boom .bang,.boom .bit{display:none}
+  .boom .word{animation:fade 1s forwards}
+}
+
 /* confetti */
 .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}
 .confetti i{position:absolute;top:-20px;width:10px;height:16px;border-radius:2px;animation:fall linear forwards}
@@ -644,7 +660,7 @@ function check(v){
     $('#answer').textContent = q.ans; $('#answer').classList.remove('empty');
     $('#feedback').textContent = G.streak > 0 && G.streak % 5 === 0 ? `${G.streak} in a row! 🔥` : PRAISE[ri(0, PRAISE.length-1)];
     if(G.type === 'boss'){ G.hp--; bump('hit'); if(G.hp <= 0) $('#feedback').textContent = `You beat ${G.monName}! 🎉`; }
-    sound('good'); updateHud(); save();
+    sound('good'); boom(card); updateHud(); renderHeader(); save();
     setTimeout(nextQ, G.type === 'sprint' ? 300 : 750);
     return;
   }
@@ -1065,7 +1081,7 @@ function answer(btn){
     block.querySelectorAll('.opt').forEach(b => { if(b !== btn) b.disabled = true; });
     if(R.first[i]){ R.score++; R.p.stars++; }
     fb.textContent = es ? '¡Correcto! 🎉' : PRAISE[ri(0, PRAISE.length-1)];
-    sound('good');
+    sound('good'); boom(btn);
   } else {
     btn.classList.add('wrong'); btn.disabled = true; R.first[i] = false;
     fb.textContent = es ? 'Casi. Busca la respuesta en el cuento.' : 'Not quite. Look back at the story and try again.';
@@ -1141,6 +1157,7 @@ function sound(type){
   if(!S.sound) return;
   try{
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if(type === 'good') return horn();
     const seq = {good:[[660,.08],[880,.13]], bad:[[196,.22]], done:[[523,.1],[659,.1],[784,.1],[1047,.25]]}[type];
     let t = ac.currentTime;
     for(const [f,d] of seq){
@@ -1150,6 +1167,41 @@ function sound(type){
       o.connect(g).connect(ac.destination); o.start(t); o.stop(t+d+.02); t += d;
     }
   }catch(e){}
+}
+// A cute brassy "dun dun!": two toots that scoop up into pitch, like a cartoon horn
+function horn(){
+  const t0 = ac.currentTime + .01;
+  for(const [f, at, d] of [[392, 0, .13], [523.25, .17, .28]]){
+    const t = t0 + at, filt = ac.createBiquadFilter(), g = ac.createGain();
+    filt.type = 'lowpass'; filt.Q.value = 5;
+    filt.frequency.setValueAtTime(500, t); filt.frequency.exponentialRampToValueAtTime(2600, t+.05); filt.frequency.exponentialRampToValueAtTime(900, t+d);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.16, t+.025);
+    g.gain.setValueAtTime(.16, t+d*.6); g.gain.exponentialRampToValueAtTime(.0001, t+d);
+    filt.connect(g).connect(ac.destination);
+    for(const [type, mult] of [['sawtooth', 1], ['square', 1.006]]){
+      const o = ac.createOscillator(), lfo = ac.createOscillator(), wob = ac.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(f*mult*.82, t); o.frequency.exponentialRampToValueAtTime(f*mult, t+.045);
+      lfo.frequency.value = 7; wob.gain.value = f*.012;
+      lfo.connect(wob).connect(o.frequency);
+      o.connect(filt); o.start(t); o.stop(t+d+.03); lfo.start(t); lfo.stop(t+d+.03);
+    }
+  }
+}
+const BOOMS = ['BOOM!','KAPOW!','ZAP!','WHAM!','YAY!','WOWZA!','BAM!','POW!','¡OLÉ!'];
+const BITS = ['🎉','⭐','💫','✨','🌟','🤩','😂','🎈','🍕','🦄','🍩','🐸','🍌','🧁'];
+function boom(el){
+  if(!el) return;
+  const r = el.getBoundingClientRect(), layer = document.createElement('div');
+  layer.className = 'boom-layer';
+  let bits = '';
+  for(let i = 0; i < 14; i++){
+    const a = i / 14 * Math.PI * 2 + Math.random() * .4, d = 90 + Math.random() * 100;
+    bits += `<span class="bit" style="--dx:${(Math.cos(a)*d).toFixed(0)}px;--dy:${(Math.sin(a)*d).toFixed(0)}px;--r:${ri(-360,360)}deg;animation-delay:${(Math.random()*.08).toFixed(2)}s">${BITS[ri(0, BITS.length-1)]}</span>`;
+  }
+  layer.innerHTML = `<div class="boom" style="left:${r.left + r.width/2}px;top:${r.top + r.height/2}px"><span class="bang">💥</span>${bits}<span class="word">${BOOMS[ri(0, BOOMS.length-1)]}</span></div>`;
+  document.body.appendChild(layer);
+  setTimeout(() => layer.remove(), 1200);
 }
 function confetti(){
   if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
