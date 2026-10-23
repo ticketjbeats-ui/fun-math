@@ -35,6 +35,7 @@
   color-scheme: dark;
 }
 *,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{
   margin:0; min-height:100vh;
@@ -244,6 +245,13 @@ main{max-width:760px;margin:0 auto;padding:4px 18px 40px}
 #shoppanel{margin-bottom:18px}
 #shoppanel .newt{margin-top:12px}
 
+/* voice settings */
+.form select{width:100%;font:inherit;font-size:18px;padding:10px 12px;border:2px solid var(--edge);border-radius:12px;background:var(--paper);color:var(--ink)}
+.tips{background:var(--paper);border:2px dashed var(--rule);border-radius:14px;padding:14px 16px;font-size:17px;line-height:1.45;color:var(--ink-soft)}
+.tips b{color:var(--ink)}
+.tips ul{margin:8px 0;padding-left:20px}
+.tips li{margin-bottom:6px}
+
 /* stories */
 .reader{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 .story{background-color:var(--card);background-image:linear-gradient(90deg,transparent 30px,var(--margin) 30px,var(--margin) 32px,transparent 32px);border:2px solid var(--edge);border-radius:18px;box-shadow:0 6px 0 var(--edge);padding:22px 22px 14px 50px;line-height:1.6}
@@ -326,6 +334,9 @@ main{max-width:760px;margin:0 auto;padding:4px 18px 40px}
   .key{min-height:58px}
   .bubble{min-height:80px;font-size:38px}
   .qcard{min-height:140px;padding-left:44px}
+  .game-top{gap:6px}
+  .pips{gap:3px;min-width:0;flex-wrap:wrap}
+  .pips i{width:12px;height:12px}
 }
 </style>
 </head>
@@ -395,6 +406,7 @@ function load(){
   return {players:[newPlayer('Anna','🦊','starter'), newPlayer('Vanessa','🚀','pro')], sound:true, current:null};
 }
 let S = load();
+S.voice = S.voice || {}; S.rate = S.rate || 1;
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 
 const $app = document.getElementById('app');
@@ -442,7 +454,7 @@ function renderHome(){
     ${S.players.length < 4 ? `<button class="add" data-act="add">+ Add a player</button>` : ''}
   </div>
   <p class="foot">Math games, story time and Spanish. Stars and progress save on this device.<br>
-    Word problems adapted from SVAMP and GSM8K (MIT License). <a href="THIRD_PARTY_NOTICES.md">Credits</a></p>`;
+    Word problems adapted from SVAMP and GSM8K (MIT License). Voices made with Kokoro. <a href="THIRD_PARTY_NOTICES.md">Credits</a> · <button class="link" data-act="voice" style="font-size:inherit;padding:0">Voice settings</button></p>`;
   renderHeader();
 }
 
@@ -504,10 +516,11 @@ function renderMenu(){
     sight: `<button class="tile" style="--acc:var(--sun)" data-act="game" data-game="sight"><span class="ti">👀</span><h2>Sight words</h2><p>Listen to a word, then tap it. Great for new readers.</p></button>`,
     spanish:`<button class="tile" style="--acc:var(--tomato)" data-act="game" data-game="spanish"><span class="ti">🌎</span><h2>Spanish words</h2><p>Match pictures and Spanish words. ¡Vamos!</p><span class="best">${factCount(p,'es:') ? `Words learned: ${factCount(p,'es:')}` : 'Learn your first word'}</span></button>`,
     shop:  `<button class="tile" style="--acc:var(--mint)" data-act="shop"><span class="ti">🛍️</span><h2>Sticker shop</h2><p>Spend your stars on stickers and new buddies.</p><span class="best">⭐ ${wallet(p)} to spend</span></button>`,
+    voice: `<button class="tile" style="--acc:var(--sky)" data-act="voice"><span class="ti">🗣️</span><h2>Voice settings</h2><p>Pick the talking voice and speed.</p></button>`,
     trophy:`<button class="tile" style="--acc:var(--grape)" data-act="trophies"><span class="ti">🏆</span><h2>Trophies</h2><p>${Object.keys(p.trophies).length} of ${TROPHIES.length} won. Can you get them all?</p></button>`
   };
   const mathOrder = p.level === 'starter' ? ['pop','boss','build','word','sprint','map'] : ['sprint','boss','word','pop','build','map'];
-  const readOrder = canSpeak ? ['read','sight','spanish'] : ['read','spanish'];
+  const readOrder = ['read','sight','spanish'];
   const grid = (keys, first) => `<div class="games">${keys.map((k,i) => first && i === 0 ? tiles[k].replace('class="tile"','class="tile first"').replace('<h2>','<span class="tag">Start here</span><h2>') : tiles[k]).join('')}</div>`;
   const today = dayStr(0), streakOn = p.days.last === today || p.days.last === dayStr(-1);
   $app.innerHTML = `
@@ -521,7 +534,7 @@ function renderMenu(){
   <h2 class="sect">📖 Reading &amp; Español</h2>
   ${grid(readOrder)}
   <h2 class="sect">🏆 My stuff</h2>
-  ${grid(['trophy','shop'])}`;
+  ${grid(['trophy','shop','voice'])}`;
   renderHeader();
 }
 
@@ -631,7 +644,7 @@ function startGame(type){
   <div class="game kind-${W ? type : 'math'}">
     <div class="game-top">
       <button class="link" data-act="quit">Quit</button>
-      ${canSpeak ? `<button class="icon sm" data-act="hear" aria-label="Read it to me">🔊</button>` : ''}
+      <button class="icon sm" data-act="hear" aria-label="Read it to me">🔊</button>
       ${type === 'sprint'
         ? `<div class="timer" role="timer" aria-label="Time left"><div class="track"><div class="fill" id="fill" style="width:100%"></div></div><span class="secs" id="secs">${L.sprint}</span></div>`
         : type === 'boss' ? `<div class="hearts" id="hearts" aria-label="Hearts left"></div>`
@@ -889,7 +902,7 @@ function renderMap(){
 /* ---------- stories ---------- */
 // qs: [question, correct answer, ...wrong answers]
 const STORIES = [
-  {id:'max', grade:1, e:'🐶', vocab:[['dog','perro'],['ball','pelota'],['red','rojo'],['park','parque'],['happy','feliz']],
+  {id:'max', grade:1, e:'🐶', vocab:[['dog','el perro'],['ball','la pelota'],['red','rojo'],['park','el parque'],['happy','feliz']],
    en:{title:'Max the Dog', text:[
      'Max is a big brown dog. He likes to run in the park.',
      'One day Max sees a red ball. He runs fast. He gets the ball!',
@@ -905,7 +918,7 @@ const STORIES = [
          ['¿Qué encuentra Max?','Una pelota roja','Un palo','Un sombrero'],
          ['¿Cómo se siente Max al final?','Feliz','Triste','Enojado']]}},
 
-  {id:'seed', grade:1, e:'🌱', vocab:[['seed','semilla'],['water','agua'],['sun','sol'],['flower','flor'],['green','verde']],
+  {id:'seed', grade:1, e:'🌱', vocab:[['seed','la semilla'],['water','el agua'],['sun','el sol'],['flower','la flor'],['green','verde']],
    en:{title:'The Little Seed', text:[
      'Mia has a little seed. She puts it in the dirt. She gives it water every day. The sun is warm.',
      'One day, Mia sees a tiny green leaf. The seed is growing!',
@@ -921,7 +934,7 @@ const STORIES = [
          ['¿Qué le da Mia a la semilla todos los días?','Agua','Dulces','Un libro'],
          ['¿En qué se convierte la semilla?','En una flor amarilla y alta','En un árbol de manzanas','En un bicho rojo']]}},
 
-  {id:'rain', grade:1, e:'☔', vocab:[['rain','lluvia'],['mom','mamá'],['book','libro'],['chair','silla'],['fun','divertido']],
+  {id:'rain', grade:1, e:'☔', vocab:[['rain','la lluvia'],['mom','mamá'],['book','el libro'],['chair','la silla'],['fun','divertido']],
    en:{title:'Rain Day', text:[
      'It is raining. Leo can not play outside. He feels sad.',
      'Then Mom has an idea. “Let’s make a fort!” They use blankets and chairs. Leo brings his books and a flashlight.',
@@ -937,7 +950,7 @@ const STORIES = [
          ['¿Qué hacen Leo y Mamá?','Un fuerte','Un pastel','Un papalote'],
          ['¿Qué hacen en el fuerte?','Leen cuentos','Comen sopa','Se duermen']]}},
 
-  {id:'frog', grade:1, e:'🐸', vocab:[['frog','rana'],['fly','mosca'],['fish','pez'],['pond','estanque'],['nap','siesta']],
+  {id:'frog', grade:1, e:'🐸', vocab:[['frog','la rana'],['fly','la mosca'],['fish','el pez'],['pond','el estanque'],['nap','la siesta']],
    en:{title:'The Hungry Frog', text:[
      'Fred is a green frog. He lives by a pond. Fred is hungry.',
      'He sees a fly. Zap! His long tongue grabs the fly. Yum!',
@@ -953,7 +966,7 @@ const STORIES = [
          ['¿Qué se come Fred?','Una mosca','Un pez','Una galleta'],
          ['¿Qué hace Fred al final?','Toma una siesta','Se va nadando','Canta una canción']]}},
 
-  {id:'tower', grade:1, e:'🧱', vocab:[['friend','amigo'],['tower','torre'],['tall','alto'],['blocks','bloques'],['again','otra vez']],
+  {id:'tower', grade:1, e:'🧱', vocab:[['friend','el amigo'],['tower','la torre'],['tall','alto'],['blocks','los bloques'],['again','otra vez']],
    en:{title:'Best Friends', text:[
      'Lily and Ben are best friends. They like to build with blocks. Today they build a tall tower.',
      'Oops! Ben bumps it. The tower falls down. Ben is sorry.',
@@ -969,7 +982,7 @@ const STORIES = [
          ['¿Qué le pasa a la torre?','Se cae','Se pone azul','Sale volando'],
          ['¿Qué dice Lily?','¡Podemos construirla otra vez!','¡Vete a casa!','¡Estoy enojada!']]}},
 
-  {id:'abuela', grade:1, e:'🫓', vocab:[['grandma','abuela'],['dough','masa'],['kitchen','cocina'],['hot','caliente'],['thank you','gracias']],
+  {id:'abuela', grade:1, e:'🫓', vocab:[['grandma','la abuela'],['dough','la masa'],['kitchen','la cocina'],['hot','caliente'],['thank you','gracias']],
    en:{title:'Cooking with Abuela', text:[
      'Sofi goes to see her abuela. Abuela means grandma in Spanish. Today they make tortillas.',
      'Sofi rolls the masa, or dough, into little balls. Abuela presses them flat. Then they cook them on a hot pan called a comal.',
@@ -985,7 +998,7 @@ const STORIES = [
          ['¿Qué hacen Sofi y Abuela?','Tortillas','Galletas','Pizza'],
          ['¿Qué dice Sofi al final?','¡Gracias, Abuela!','¡Buenas noches!','Tengo frío.']]}},
 
-  {id:'volcano', grade:5, e:'🌋', vocab:[['science fair','feria de ciencias'],['judges','jueces'],['mistake','error'],['bubble','burbuja'],['award','premio']],
+  {id:'volcano', grade:5, e:'🌋', vocab:[['science fair','la feria de ciencias'],['judges','los jueces'],['mistake','el error'],['bubble','la burbuja'],['award','el premio']],
    en:{title:'The Science Fair Surprise', text:[
      'Priya had spent three weeks building a model volcano for the science fair. She had mixed the papier-mâché, painted the slopes a rocky gray, and tested her baking soda eruption twelve times in the garage. Every test had worked perfectly.',
      'On the morning of the fair, Priya set up her table and waited for the judges. When they arrived, she poured the vinegar into the crater with a confident smile. Nothing happened. Not a single bubble.',
@@ -1007,7 +1020,7 @@ const STORIES = [
          ['“Se le puso la cara caliente.” ¿Cómo se sentía Priya?','Avergonzada','Aburrida','Orgullosa','Emocionada'],
          ['¿Cuál es la lección principal del cuento?','Aprender de un error puede ser valioso','Siempre hay que ganar el primer lugar','La ciencia es muy difícil','Nunca uses vinagre']]}},
 
-  {id:'lighthouse', grade:5, e:'🌊', vocab:[['lighthouse','faro'],['storm','tormenta'],['waves','olas'],['ship','barco'],['light','luz']],
+  {id:'lighthouse', grade:5, e:'🌊', vocab:[['lighthouse','el faro'],['storm','la tormenta'],['waves','las olas'],['ship','el barco'],['light','la luz']],
    en:{title:'Storm at Gull Rock', text:[
      'In 1856, fourteen-year-old Nora lived with her family at the lighthouse on Gull Rock, a tiny island far off the coast. Her father kept the lamps burning so ships could find their way safely through the dark.',
      'One January morning, her father rowed to the mainland to buy food and medicine. He promised to return the next day. That night, a fierce storm swept in. Waves crashed over the rocks, and the wind howled so loudly that Nora could barely hear her little sisters crying.',
@@ -1029,7 +1042,7 @@ const STORIES = [
          ['¿Qué palabra describe mejor a Nora?','Responsable','Perezosa','Descuidada','Tonta'],
          ['¿Qué pasó justo después de que se calmó el mar?','Apareció el bote de su papá','Se apagaron las lámparas','Nora durmió una semana','Empezó otra tormenta']]}},
 
-  {id:'monarch', grade:5, e:'🦋', vocab:[['butterfly','mariposa'],['journey','viaje'],['forest','bosque'],['caterpillar','oruga'],['winter','invierno']],
+  {id:'monarch', grade:5, e:'🦋', vocab:[['butterfly','la mariposa'],['journey','el viaje'],['forest','el bosque'],['caterpillar','la oruga'],['winter','el invierno']],
    en:{title:'The Monarch Mystery', text:[
      'Every fall, millions of monarch butterflies do something amazing. They fly up to 3,000 miles from Canada and the United States to the mountains of central Mexico. No single butterfly has ever made the trip before, yet they find the same forests their great-great-grandparents visited.',
      'How do they do it? Scientists believe monarchs use the sun as a compass. Special cells in their antennae work like a clock, helping them adjust for the sun’s position as it moves across the sky. Some research suggests they may also sense Earth’s magnetic field, especially on cloudy days.',
@@ -1051,7 +1064,7 @@ const STORIES = [
          ['¿Por qué es tan importante el algodoncillo?','Es la única planta que pueden comer sus orugas','Mantiene calientes a las mariposas','Hace que las ramas se doblen','Les dice hacia dónde volar'],
          ['¿Qué significa “se agrupan” en este artículo?','Se juntan muy cerca','Se van volando','Se duermen','Cambian de color']]}},
 
-  {id:'newkid', grade:5, e:'🎒', vocab:[['friend','amigo'],['to draw','dibujar'],['school','escuela'],['lunch','almuerzo'],['to miss','extrañar']],
+  {id:'newkid', grade:5, e:'🎒', vocab:[['friend','el amigo'],['to draw','dibujar'],['school','la escuela'],['lunch','el almuerzo'],['to miss','extrañar']],
    en:{title:'The New Kid', text:[
      'On his first day at Lincoln Elementary, Mateo stood frozen in the cafeteria doorway, gripping his lunch tray. His family had moved from Puerto Rico two weeks earlier, and everything felt unfamiliar: the cold weather, the long hallways, and the fast English that swirled around him.',
      'He spotted an empty seat at the end of a table and sat down quietly. A girl with a sketchbook looked up. “Hi, I’m Jada,” she said. “Do you like to draw?”',
@@ -1113,7 +1126,7 @@ function renderStory(id){
   $app.innerHTML = `
   <div class="reader g${s.grade}">
     <div class="game-top"><button class="link" data-act="stories">← ${es ? 'Todos los cuentos' : 'All stories'}</button>
-      ${canSpeak ? `<button class="btn" data-act="speak">🔊 ${es ? 'Léemelo' : 'Read to me'}</button>` : ''}</div>
+      <button class="btn" data-act="speak">🔊 ${es ? 'Léemelo' : 'Read to me'}</button></div>
     <article class="story"${es ? ' lang="es"' : ''}>
       <h1><span aria-hidden="true">${s.e}</span> ${esc(T.title)}${lang === 'both' ? `<small lang="es">${esc(s.es.title)}</small>` : ''}</h1>${paras}
     </article>
@@ -1122,7 +1135,7 @@ function renderStory(id){
     <div class="nextrow" id="quizgo"><button class="btn go" data-act="quiz">${es ? '¡Ya lo leí! Ver preguntas' : 'I read it! Show the questions'}</button></div>
     <div class="quiz" id="quiz" hidden${es ? ' lang="es"' : ''}>${T.qs.map((q,i) => `
       <div class="qblock">
-        <p class="qq"><span>${i+1}. ${esc(q[0])}</span>${canSpeak ? `<button class="say" data-act="speakq" data-i="${i}" aria-label="${es ? 'Leer la pregunta' : 'Read the question aloud'}">🔊</button>` : ''}</p>
+        <p class="qq"><span>${i+1}. ${esc(q[0])}</span><button class="say" data-act="speakq" data-i="${i}" aria-label="${es ? 'Leer la pregunta' : 'Read the question aloud'}">🔊</button></p>
         <div class="opts">${shuffle(q.slice(1).map((t,j) => [t, j === 0])).map(([t,ok]) =>
           `<button class="opt" data-act="answer" data-i="${i}" data-ok="${ok ? 1 : 0}">${esc(t)}</button>`).join('')}</div>
         <p class="qfb" aria-live="polite"></p>
@@ -1178,20 +1191,131 @@ function finishStory(){
   </section>`;
   $('#storyend').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'center'});
 }
-function hush(){ if(canSpeak) speechSynthesis.cancel(); }
-function say(parts, rate){
-  if(!canSpeak) return;
-  hush();
-  for(const [t, l] of parts){
-    const u = new SpeechSynthesisUtterance(t);
-    u.lang = l === 'es' ? 'es-MX' : 'en-US';
-    u.rate = rate || (R && R.s.grade === 1 ? .85 : .95);
-    speechSynthesis.speak(u);
-  }
+/* ---------- voice ---------- */
+// Fixed text (stories, sight words, Spanish words, word problems) plays from recorded clips in audio/,
+// made with the Kokoro voice model. Anything else falls back to the best voice this device has.
+const CLIPS = new Set('00092f2a 00abfc1b 00e64dce 010ab0ca 012b96c8 01420e5c 0210e858 023a898c 0251f62e 0283cd47 029ecee0 02f49b35 03229f92 03357502 034b91d6 03660d24 047e7273 05002335 05495888 0576dda4 0620f106 07c33856 087c4610 08ecf7ab 08f48471 0911623b 091c4589 093e2adb 098c56d7 09d2a479 0a304300 0a7e6d6d 0a8f5543 0ab2ec87 0b4ba2a8 0b6301ef 0b6ad6f5 0b70305a 0b70c967 0bb073dc 0c11dafc 0c19927b 0c683534 0c7bc6f8 0c7db8e4 0cef69a1 0d25a4fa 0dc4e54c 0dc84a1d 0e1cbb48 0e36389b 0e79817b 0f2c4abc 100c95ba 104aac5b 109d82c4 112a1be7 11d24b43 11ed6694 122db539 124f547d 12b80b45 12e7722a 1393d933 1396fd7b 13a519a4 1402536a 14188065 14a9f319 14f58733 152757bd 153b13e6 153d4b59 153e51b4 155f2367 157a2118 162831eb 169139a9 16d366a9 16f103de 1732ef35 173941cb 1788881a 1846ab5a 189b9ee3 18e1d6e7 1934d129 1a6af27c 1a6cf697 1a7e564e 1ad46fa8 1ad65c37 1ad98352 1adae528 1aedff78 1b2b8a75 1b3b0429 1b5b6aae 1b6d19b8 1b7c7418 1bb2aaff 1c19999f 1c2b1c13 1d76f997 1f5c0eee 1f9fa9ce 1ff5c50b 20639507 210d669e 212f2415 2196eeae 2199ac68 21c344c2 22259675 228b1d51 22b44c86 230a963a 239b0673 23a7837e 24613187 24c0e606 25233f3e 25463fac 2586542b 2663a701 267b584c 26c15850 26c34ca1 26dc20a5 26f172d6 27027bdf 27479ef4 27cb393f 27cd8c57 293faa3e 298fefef 2996ffa3 29cb218e 2a4267cb 2a79fef1 2a9f4804 2b54461c 2b6435b2 2b668cf4 2b89d9f7 2bbfc32c 2bce545b 2bfc80cd 2c30380c 2c64ab47 2caa89fd 2cb950e4 2cbfa17f 2ce37a21 2cf05857 2cf77a48 2d52c62b 2dc81bf8 2dd1e474 2e02278b 2e0f121f 2e220e68 2e6072ba 2e963a72 2ef57bcc 2f04427d 2f0f13b2 2f19f9b6 2f7082c6 2fa557ab 2fa68bff 2fb23f0a 3007bc3f 3074d3a0 31792b06 31cbb53b 31d45a89 3204f56c 322776cc 32c88d9d 330bf7ea 33470511 33db97ac 33e463eb 34068fd7 341b21ee 342b59bb 34a44de3 34a72fac 34fab1ef 35931fab 359ed515 36459dd5 3666ae6d 36b1fbca 36fa8f32 3776846c 377774a2 3795d7b4 37abb670 37facd63 37fcae01 3803aa66 38051002 38069e8a 382746a4 3856506c 386ab63a 38aac8c6 38b32850 38caf312 38d633eb 390d434f 397e13c6 39d08bbf 3a2300bb 3a3222b2 3a6858fe 3b8be925 3ba5619c 3bbf45ac 3bc0b5a7 3bdbc8f6 3c0b22c5 3c533202 3ca1a198 3ca43388 3cec7d87 3dcc1ea8 3e0b81cd 3e2e02eb 3e2f969e 3e6d1085 3e7a7d28 3eaa85e4 3ead767e 3edab2d0 3ef73adb 3efc3053 3ff1d627 4003535a 40090b5a 4084a13a 40afdfb1 40ed3685 40ffa785 416a003e 41750e11 41d03f7b 41f31b98 41f35383 42749f8d 42aa0167 42f1018a 42f35fcb 43852a89 44ac82cc 44b9e199 45fff6c4 46002d5d 46412e2e 4678a8f2 46f47804 471bc6e9 473963ed 473c3643 474c42e4 47bfdc7d 47e1006c 47f4a6c8 481d621a 48487971 4892c27f 4893a1bf 490f7330 49b93d82 49c5429d 4a279c3d 4a3e0c54 4a8974b6 4aba96ca 4acac971 4ad0f266 4ad1f35b 4b18cc46 4b3c3ad6 4b40d5b5 4b8ca7af 4c128b12 4cb3e593 4cd9830b 4cdb78a4 4d6e88a9 4f23f4d6 4f5cc12a 4f6926f1 4f8005fe 4fb60fdf 4fec376a 4ff0ceaf 501ab443 504146e6 505f05de 50692e6c 506af593 51b17948 51c38f21 51d9d2a3 51e71e3a 5275857d 5318d82e 535fe7cb 53664729 53708f6a 537f6afd 53a76cb2 54bf390f 54cf779f 54e2c0f6 54e801a9 551aef47 55538af5 556f44ab 55b27107 560d58b6 564cb3fc 5650f413 567508af 5714b679 57255871 578e4461 58180ae7 583d9d27 58adf4d6 58ba222d 591007c6 594cb8b5 59b54c6f 59d434b1 59e100a4 59e9ff05 59edcc97 5a0bb536 5a347a67 5a57bb03 5a5bc4d2 5a82297f 5ad8c159 5b3e79c5 5b423b57 5b9a2607 5ba29d41 5c0b571e 5c199c6b 5c34abfd 5cee0c74 5d0f2fb6 5d11d86a 5d2e5072 5d5412a9 5d7f2d68 5da33b03 5dcef193 5dd1fc66 5e1aca4d 5e32239c 5e3e3a4a 5e43d0b5 5f12e9d8 5faa95e5 5fcfbe5b 5fff19c8 60326465 6070d491 60d2011f 60fab9ec 612e56be 6156b751 617bc9d6 619cc87c 61b8dc8a 62255df5 6312e254 6334e903 634656e0 634a21de 63581a4b 638c2106 638dce63 63b62f5b 63c721b8 63ea0abe 63eeb903 63feacbe 6441b5ba 64f01c7f 652c1cc4 65633ea7 65bc0036 65edc167 65f01e12 65f1ccee 65fee209 66194b44 662b4e14 6632d198 6653ea43 6657c2b5 668413d7 66a8a611 66d687bf 67cd66ae 684439fb 687d5086 6883bb00 68edf2af 696cffc0 69ca106d 69cfe227 69fb3c7c 6a1c185b 6a2306c2 6a4a6f11 6a6f65ba 6a82894a 6b11e5c7 6b195323 6b1f6fad 6b278f5b 6b63a026 6ba78124 6bdb0ccc 6bf4657c 6c040960 6c5be128 6c5d3beb 6c62737c 6c9f004c 6ca6c114 6cae9e96 6cc31a04 6cd2e4c2 6cdfc7f3 6ce72560 6d05617b 6d5a3b1f 6d61a0d2 6dbe8dde 6ddf594a 6df4ce14 6e0152f6 6e017964 6ee1c55b 6f00ef31 6f7a4021 6f7f3ad2 6f8bbd34 6fd39764 6fdb9e74 700913d6 7013a499 70184c38 706373f9 70a7ec59 70b02240 70be9297 70dea57e 70e757fc 70f1f7ee 71132a97 71641cbb 717b3217 71d5cb4a 723b2489 726a33be 726b36f3 72d21d75 72d69aa3 72e6c221 7360438b 7368bae9 73c1daca 7439512e 748c7307 74b3827b 74be02d5 7507a554 7511f400 752e2862 75379319 755902a2 756d7c80 75f72418 760e19ef 761cd467 7627b1d5 76461a52 765aacc1 76a3b0ee 76ca8df0 76f5fc1a 7791a6c5 77981bad 77a8e9c8 77b914e4 77be9d9c 77f913ef 78e9661a 78fe5817 79326886 7956dd19 79c25e33 79c31df0 79c55c87 7a0b9bfa 7a338629 7abea255 7ac54d25 7ad22a0d 7ad6a73b 7b4a47ab 7b5cbf39 7bfe75fb 7c01829e 7c2f5557 7ce966eb 7cec8887 7d095243 7d3f8031 7d524334 7d777364 7da8239f 7e1d7757 7e4865b6 7e8fff10 7ed7ef6d 7ee4688e 7f112b17 7f3966f3 7f4832bb 7f7ff8b4 7f8d630c 7fdb2c48 7ff3a9b5 8047e3a7 80d61308 814c2e7c 815469f2 81b84093 81d3a2c9 82116841 8218bf92 82219540 82e730e8 82fb1e13 83cff9a1 83e33869 84916664 85267bab 857baf3e 85b2a248 85be9b3c 86058faf 86265efd 862e6e55 86bf9f8d 86e95200 86fc2e16 8711b1e2 871d66b5 87c396e4 87ec1a98 880b9a66 882b9c45 88bc1385 88dc811b 892c9384 8959aa68 89871231 89f3d4a3 8a10d47e 8a38228a 8a6d0bd8 8ac1a3b7 8aeda5df 8b137068 8b7650c9 8ba03903 8bc3c6fe 8bc705eb 8c871da1 8cd5a41f 8cd6ea15 8cf10d19 8d080981 8d20beb8 8d8799ee 8e39dd02 8e58aee6 8e79e467 8e9cbda1 8ed1371c 8ef7ac61 8f3c4b14 8fb9b066 90ab22df 90d138a9 91302c64 914ed748 9177375e 9185a6b0 9192b6df 91b134a0 923a8a0a 92aacc8a 92bd9f1c 93507df5 93516b61 937eb2fb 93a4e409 941b49f7 944feb30 945665dc 947d5cd0 94965c9e 94a586c5 94b8bf05 94bbcfdf 9530b39d 953a20ff 953b2c51 9592d4c5 95e103e8 96023ca4 9628f1ee 965a2117 96686861 96abbd25 97191349 97408d70 9772a1a8 97e1efd7 98162b5f 9817b3b2 9855f1ea 988f4749 98c49d88 991534d6 9933b086 9974f8c3 998d602c 99fb6afa 9a066db8 9a07b88d 9a4dba45 9a547d11 9a984eaa 9baf33f8 9c2c74c5 9c3e0166 9c76e38b 9cb0ec76 9cbb8dba 9ccd7ef0 9ce014ec 9cf91053 9dfeada5 9e2ef864 9e4c1a7c 9e62b38b 9e9784bc 9eb0ef9c 9ef34045 9f3424c9 9f460cf2 9f754a9a 9f7c3448 9f82cc98 a0647aae a09905aa a12f024e a18e417a a1b8afc3 a204706d a29d8c71 a2d17e14 a2dffbc3 a2e9e52e a30fd96a a37d3273 a393450a a3a6c746 a3c735a7 a3c9dcd0 a3eadbad a41aeda7 a4218ac3 a56d1d14 a56f473f a5c72921 a6079c7b a61ce21d a6b89079 a6bdc315 a6f404c8 a7998814 a7d0fa48 a85b321c a864f2d9 a87b1d11 a8b57f49 a8ec063a a92ecfa5 a940be6d a97291bd a982fc40 a98748d5 a9b14f07 a9b3a3a1 a9c95e18 aa5c673a aab8efcd aac5242d aad0a1c2 aaefb089 aaf64b28 ab780d0d aba311c7 abc3b457 acb2736d acf775d0 ad9d140c adbd3b1b ae072c20 ae5a9fb2 ae699b66 ae77b1ec af22bfda af303301 b01c0ef7 b0668635 b101942e b1ab8bd0 b216779d b22b332d b2302feb b2472bc6 b25edc2e b2eea948 b2f04a91 b328b005 b33c81ff b340ffb1 b34acfb4 b38a17c0 b3f2d918 b3f3d80d b417cab4 b41b620f b42531a3 b4274585 b42d7fb5 b4379ef1 b44dd6e6 b47f30ae b540539e b5445c24 b5686d2d b6491995 b72294ad b77ca10a b7ced6bf b87d345e b89a440c b9f076a4 b9f2aae2 bab826d4 bb0a19bd bb18e06d bb2e66fd bb43be5f bb68ae49 bbfb9624 bc87d197 bd3cbfa7 bd85d6d1 bde978fa be023ece be2f7c64 be4df270 be5360a5 bef2c05c bf2f1e24 bf366f53 bf850bcd bfaa70a4 bfb59776 bfcc83ef bffeeba6 c03a7851 c082ab91 c097fede c09d8559 c1007baa c1073585 c18b7e68 c192dc13 c1c38286 c1c6a5ca c23e889c c28efb25 c294cd6e c2e7f949 c3125fd8 c31a614a c3341d13 c33c817c c3b5cc50 c4152bdd c43a7ea8 c464e9f1 c47aeb87 c501a8f5 c50f1187 c542bca8 c5472a29 c5cc8d61 c5eb08d2 c629965e c6b4a38c c6bc2ab8 c6cc6d0d c6d8f3f4 c756e08a c775f65a c77cb407 c88f8ffe c893f2b6 c8b57dfe c905cd36 c9446b65 c94f8017 c98aa646 c9fcf001 ca10bd66 ca1baa33 ca3d2f65 ca48d1bb ca9e4e8a ca9efed4 cac17909 cb0697f8 cb23ca35 cb38b84c cb990da8 cbd4a7f7 cbd4c7bb cc03feb8 cc4fbd50 cc532629 cd35c0da cd58753d cd692a1f cdb5a005 cdf02904 ce810579 cf0afb37 cf21d919 cf4fe6ee cf503feb cfae79a7 cfca2f73 d06763ae d06c2b0f d0aa07d3 d0c184c5 d1071032 d189e040 d190825f d1f4a9ad d21245c8 d236d856 d23b08ec d279b65f d2c2b713 d2cf88ef d2f40ca9 d33efce6 d3be9e66 d3bf3cf7 d3c90a7a d40a883c d4183309 d4836545 d4eb6b29 d4f06173 d504bb92 d52b6f9a d54f9ed1 d58090d9 d58b3db0 d6033cab d6145d06 d627e426 d6983d04 d6ace400 d6cf2ddf d70a6eb7 d74953bc d782af45 d7b0a519 d7cfc2c8 d86aba75 d8d8ce34 d90368b0 d90c0c6c d91860fb d919da6b d944c76f d9e1061d da783cf1 daef99a9 db35b3b4 db527720 db7dfd4e dbd548be dc17eb4c dc4630e9 dccaf1d0 dcd78e77 dcf1eb79 dd1624e7 dd1a1e90 dd467524 dd493e68 dd73806d dd839d40 dd93b23d ddc61c2a ddcb53ff de50d442 de89d1be ded1bdb8 df3210c1 df4d75d9 df5e8460 dfa07cce e07d8e17 e09d5272 e0acb4c1 e1708384 e1875eaf e1bc70b9 e1bf23d3 e1d541d1 e2201c49 e220df6f e24e7be4 e2d1386d e2e0c0c7 e3369017 e3c21f16 e4367953 e480df43 e4943931 e4aa60fe e4f14adf e573bf07 e59c68a1 e61571e6 e641a134 e64a1c09 e6e22b91 e6e9c4cb e7070430 e7163070 e71ed63b e7714650 e7a8d668 e7b06003 e80255e2 e815fc7f e88271f1 e8c2bc46 e8f16f8c e9251bf5 e99193a8 e99dbd67 ea44c773 ea81168f eb3795a9 ebb80ec7 ec659f09 ec81a645 ec948f84 ecafe9a7 ece4ab43 ecf29bd4 ed162093 eda9830d ede18d04 edf05aa1 ee08b993 ee2f4d87 ee6bd962 eec2c5b8 eec95295 eefa6883 ef307c6b ef4cfdf8 ef7b24d1 efb516e7 efc220b5 effff555 f020c329 f04dfa63 f0887959 f08dd0f3 f0e1ba8d f2dde198 f3136d4a f331628c f35f1fd2 f366fb03 f3764733 f38dc7d6 f396a1b0 f3a6c7e1 f3ce9432 f4405f7b f4af26b3 f4b51cae f4bcc3d9 f4e40cb7 f5052f9e f52b83e4 f5af94e7 f5d8464c f69ecda0 f6bae26d f6d2ba1b f6e4445e f7012c2c f77bd1d2 f80e6b94 f82b889d f8428f51 f875042a f88cda51 f9633a7a f9652000 fa490f3a fa6818de fa80d008 fa990db6 fad8de49 faea3161 fafbbf39 fc11d463 fc2db270 fc855a78 fcb9abc3 fd02915a fdbb6e08 fdd38939 fdff21b3 fe0d06d7 fe4164d5 fe6fcd25 fe77da9e fea44602 feabf8f5 febbd353 fefe3740 ff2b4f9f ff8b8af5 ff9633df ffd9fe39'.split(' '));
+const clipId = (l, t) => {
+  let h = 0x811c9dc5; const s = l + '|' + t;
+  for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return (h >>> 0).toString(16).padStart(8, '0');
+};
+let voiceList = [], talkToken = 0, talking = false, curAudio = null;
+function loadVoices(){ if(canSpeak) voiceList = speechSynthesis.getVoices(); if(view === 'voice') renderVoice(); }
+if(canSpeak){ loadVoices(); speechSynthesis.addEventListener('voiceschanged', loadVoices); }
+// Rank device voices: natural/online/enhanced voices first, novelty and robot voices last
+function voiceScore(v, lang){
+  const vl = v.lang.replace('_', '-').toLowerCase();
+  let s = 0;
+  if(/natural|neural|online|premium|enhanced|siri/i.test(v.name)) s += 50;
+  if(/google/i.test(v.name)) s += 30;
+  if(/microsoft/i.test(v.name)) s += 10;
+  if(!v.localService) s += 5;
+  if(lang === 'es') s += /^es-(mx|us|419)/.test(vl) ? 15 : vl === 'es-es' ? 5 : 0;
+  if(lang === 'en') s += vl === 'en-us' ? 10 : 0;
+  if(/albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|ralph|kathy|espeak/i.test(v.name)) s -= 100;
+  if(/eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley/i.test(v.name)) s -= 40;
+  return s;
 }
+const voicesFor = lang => voiceList.filter(v => v.lang.toLowerCase().startsWith(lang)).sort((a, b) => voiceScore(b, lang) - voiceScore(a, lang));
+function bestVoice(lang){
+  const list = voicesFor(lang), chosen = S.voice[lang];
+  return list.find(v => v.name === chosen) || list[0] || null;
+}
+function hush(){
+  talkToken++; talking = false;
+  if(curAudio){ curAudio.pause(); curAudio = null; }
+  if(canSpeak) speechSynthesis.cancel();
+}
+// Speak a list of [text, lang] parts in order. rate only slows down device speech; clips are recorded at kid speed.
+function say(parts, rate){
+  hush();
+  const token = talkToken;
+  talking = true;
+  const next = i => {
+    if(token !== talkToken) return;
+    if(i >= parts.length){ talking = false; return; }
+    const [t, l] = parts[i];
+    let done = false;
+    const go = () => { if(!done){ done = true; next(i + 1); } };
+    const id = clipId(l, t);
+    if(CLIPS.has(id)) playClip(id, go, () => { if(!done && token === talkToken) deviceSay(t, l, rate, go); });
+    else deviceSay(t, l, rate, go);
+  };
+  next(0);
+}
+// One shared player: once a tap has started it, phones let it keep playing later clips
+const player = typeof Audio === 'function' ? new Audio() : null;
+function playClip(id, done, fallback){
+  if(!player) return fallback();
+  let over = false;
+  const fail = () => { if(!over){ over = true; fallback(); } };
+  player.onended = () => { if(!over){ over = true; done(); } };
+  player.onerror = fail;
+  player.src = `audio/${id}.mp3`;
+  player.defaultPlaybackRate = player.playbackRate = S.rate;
+  curAudio = player;
+  player.play().catch(fail);
+}
+function deviceSay(t, l, rate, done){
+  if(!canSpeak) return done();
+  const v = bestVoice(l);
+  const text = t.replace(/[—«»“”"]/g, ' ').replace(/’/g, "'").replace(/\s+/g, ' ').trim();
+  // One utterance per sentence: sounds more natural and avoids Chrome cutting off long speech
+  const chunks = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+  chunks.forEach((c, i) => {
+    const u = new SpeechSynthesisUtterance(c.trim());
+    u.lang = v ? v.lang : (l === 'es' ? 'es-MX' : 'en-US');
+    try{ if(v) u.voice = v; }catch(e){}
+    u.rate = (rate || .95) * S.rate;
+    if(i === chunks.length - 1){ u.onend = done; u.onerror = done; }
+    speechSynthesis.speak(u);
+  });
+}
+const VOICE_TESTS = {clip:[['Max is a big brown dog. He likes to run in the park.','en'], ['Max es un perro grande y café. Le gusta correr en el parque.','es']],
+  device:{en:'Seven plus three is ten. Great job!', es:'Siete más tres son diez. ¡Muy bien!'}};
+function renderVoice(){
+  endGame(); view = 'voice';
+  const opts = lang => {
+    const list = voicesFor(lang), best = list[0];
+    return `<option value="">Automatic${best ? ` (${esc(best.name)})` : ''}</option>` +
+      list.map(v => `<option value="${esc(v.name)}"${S.voice[lang] === v.name ? ' selected' : ''}>${voiceScore(v, lang) >= 30 ? '⭐ ' : ''}${esc(v.name)} · ${esc(v.lang)}</option>`).join('');
+  };
+  $app.innerHTML = `
+  <div class="form">
+    <h1>🗣️ Voice settings</h1>
+    <p class="sub">Stories, sight words, Spanish words and word problems use clear <b>recorded voices</b> in English and Spanish. Math questions use a voice from this device.</p>
+    <div class="row"><button class="btn go" data-act="vtest" data-k="clip">▶ Hear the recorded voices</button></div>
+    <fieldset class="field" style="border:0;padding:0;margin:0"><span>Talking speed</span>
+      <div class="seg" role="radiogroup" aria-label="Talking speed" style="margin:0">${[[.85,'Slower'],[1,'Normal'],[1.1,'Faster']].map(([r,t]) =>
+        `<button role="radio" aria-checked="${S.rate === r}" class="${S.rate === r ? 'on' : ''}" data-act="vrate" data-r="${r}">${t}</button>`).join('')}</div></fieldset>
+    ${canSpeak ? `
+    <label class="field"><span>Device voice for English</span><select class="vsel" data-l="en">${opts('en')}</select></label>
+    <div class="row"><button class="btn" data-act="vtest" data-k="en">▶ Test English</button></div>
+    <label class="field"><span>Device voice for Spanish</span><select class="vsel" data-l="es">${opts('es')}</select></label>
+    <div class="row"><button class="btn" data-act="vtest" data-k="es">▶ Probar español</button></div>
+    ${voicesFor('es').length ? '' : '<p class="sub"><b>This device has no Spanish voice,</b> so Spanish that isn’t recorded may sound wrong. See the tips below to add one.</p>'}` : ''}
+    <div class="tips">
+      <b>Want an even better device voice?</b>
+      <ul>
+        <li><b>iPhone / iPad / Mac:</b> Settings → Accessibility → Spoken Content → Voices. Download an <i>Enhanced</i> or <i>Premium</i> voice, like Paulina (Spanish, Mexico) or Ava (English).</li>
+        <li><b>Windows:</b> Microsoft Edge has free natural voices. Look for names with “Online (Natural)”.</li>
+        <li><b>Android / Chromebook:</b> Use Chrome, and install or update “Speech Services by Google”.</li>
+      </ul>
+      Voices marked ⭐ are the clearest ones we found on this device.
+    </div>
+    <div class="row"><button class="btn" data-act="${cur() ? 'menu' : 'home'}">Done</button></div>
+  </div>`;
+  renderHeader();
+}
+function voiceTest(k){
+  if(k === 'clip') say(VOICE_TESTS.clip);
+  else say([[VOICE_TESTS.device[k], k]]);
+}
+
 function speakStory(){
   if(!R) return;
-  if(speechSynthesis.speaking){ hush(); return; }
+  if(talking){ hush(); return; }
   const {s, lang} = R, parts = [];
   if(lang === 'both'){ parts.push([s.en.title,'en'], [s.es.title,'es']); s.en.text.forEach((t,i) => parts.push([t,'en'], [s.es.text[i],'es'])); }
   else { parts.push([R.T.title, lang]); R.T.text.forEach(t => parts.push([t, lang])); }
@@ -1453,16 +1577,16 @@ const SIGHT = {
 const SIGHT_LEVEL = {starter:['pre','primer'], builder:['first','second'], pro:['second','third'], challenge:['third']};
 // [picture, Spanish, English, group]
 const ES_WORDS = [
-  ['🐶','perro','dog','a'],['🐱','gato','cat','a'],['🐦','pájaro','bird','a'],['🐟','pez','fish','a'],['🐴','caballo','horse','a'],['🐮','vaca','cow','a'],
-  ['🐷','cerdo','pig','a'],['🐭','ratón','mouse','a'],['🐸','rana','frog','a'],['🐻','oso','bear','a'],['🐰','conejo','rabbit','a'],['🐵','mono','monkey','a'],
-  ['🦁','león','lion','a'],['🐘','elefante','elephant','a'],['🐢','tortuga','turtle','a'],['🦋','mariposa','butterfly','a'],['🐝','abeja','bee','a'],['🐍','serpiente','snake','a'],
-  ['🍎','manzana','apple','f'],['🍌','plátano','banana','f'],['🍇','uvas','grapes','f'],['🍓','fresa','strawberry','f'],['🍞','pan','bread','f'],['🧀','queso','cheese','f'],
-  ['🥛','leche','milk','f'],['🥚','huevo','egg','f'],['🍪','galleta','cookie','f'],['💧','agua','water','f'],['🍊','naranja','orange','f'],['🌽','maíz','corn','f'],
-  ['🍰','pastel','cake','f'],['🍦','helado','ice cream','f'],
-  ['☀️','sol','sun','n'],['🌙','luna','moon','n'],['⭐','estrella','star','n'],['🌧️','lluvia','rain','n'],['🌳','árbol','tree','n'],['🌸','flor','flower','n'],
-  ['🏠','casa','house','t'],['🚗','carro','car','t'],['🚌','autobús','bus','t'],['✈️','avión','airplane','t'],['📖','libro','book','t'],['✏️','lápiz','pencil','t'],
-  ['⚽','pelota','ball','t'],['👟','zapato','shoe','t'],['🎒','mochila','backpack','t'],['🪑','silla','chair','t'],['🛏️','cama','bed','t'],['🎁','regalo','gift','t'],
-  ['👁️','ojo','eye','b'],['👃','nariz','nose','b'],['👂','oreja','ear','b'],['✋','mano','hand','b'],['🦶','pie','foot','b'],['👄','boca','mouth','b'],
+  ['🐶','el perro','dog','a'],['🐱','el gato','cat','a'],['🐦','el pájaro','bird','a'],['🐟','el pez','fish','a'],['🐴','el caballo','horse','a'],['🐮','la vaca','cow','a'],
+  ['🐷','el cerdo','pig','a'],['🐭','el ratón','mouse','a'],['🐸','la rana','frog','a'],['🐻','el oso','bear','a'],['🐰','el conejo','rabbit','a'],['🐵','el mono','monkey','a'],
+  ['🦁','el león','lion','a'],['🐘','el elefante','elephant','a'],['🐢','la tortuga','turtle','a'],['🦋','la mariposa','butterfly','a'],['🐝','la abeja','bee','a'],['🐍','la serpiente','snake','a'],
+  ['🍎','la manzana','apple','f'],['🍌','el plátano','banana','f'],['🍇','las uvas','grapes','f'],['🍓','la fresa','strawberry','f'],['🍞','el pan','bread','f'],['🧀','el queso','cheese','f'],
+  ['🥛','la leche','milk','f'],['🥚','el huevo','egg','f'],['🍪','la galleta','cookie','f'],['💧','el agua','water','f'],['🍊','la naranja','orange','f'],['🌽','el maíz','corn','f'],
+  ['🍰','el pastel','cake','f'],['🍦','el helado','ice cream','f'],
+  ['☀️','el sol','sun','n'],['🌙','la luna','moon','n'],['⭐','la estrella','star','n'],['🌧️','la lluvia','rain','n'],['🌳','el árbol','tree','n'],['🌸','la flor','flower','n'],
+  ['🏠','la casa','house','t'],['🚗','el carro','car','t'],['🚌','el autobús','bus','t'],['✈️','el avión','airplane','t'],['📖','el libro','book','t'],['✏️','el lápiz','pencil','t'],
+  ['⚽','la pelota','ball','t'],['👟','el zapato','shoe','t'],['🎒','la mochila','backpack','t'],['🪑','la silla','chair','t'],['🛏️','la cama','bed','t'],['🎁','el regalo','gift','t'],
+  ['👁️','el ojo','eye','b'],['👃','la nariz','nose','b'],['👂','la oreja','ear','b'],['✋','la mano','hand','b'],['🦶','el pie','foot','b'],['👄','la boca','mouth','b'],
   ['🔴','rojo','red','c'],['🔵','azul','blue','c'],['🟢','verde','green','c'],['🟡','amarillo','yellow','c'],['🟣','morado','purple','c'],['⚫','negro','black','c'],
   ['⚪','blanco','white','c'],['🟤','café','brown','c'],
   ['1️⃣','uno','one','#'],['2️⃣','dos','two','#'],['3️⃣','tres','three','#'],['4️⃣','cuatro','four','#'],['5️⃣','cinco','five','#'],
@@ -1651,6 +1775,9 @@ document.addEventListener('click', e => {
     case 'speakq': speakQ(+b.dataset.i); break;
     case 'speakw': say([[b.dataset.es, 'es'], [b.dataset.en, 'en']], .85); break;
     case 'hear': hearQ(); break;
+    case 'voice': renderVoice(); break;
+    case 'vrate': S.rate = +b.dataset.r; save(); renderVoice(); voiceTest('clip'); break;
+    case 'vtest': voiceTest(b.dataset.k); break;
     case 'shop': shopSel = null; renderShop(); break;
     case 'pick-sticker': shopSel = b.dataset.e; renderShop(); break;
     case 'buy': buySticker(b.dataset.e); break;
@@ -1673,6 +1800,11 @@ document.addEventListener('click', e => {
     case 'again': startGame(G.type); break;
     case 'sound': S.sound = !S.sound; save(); renderHeader(); break;
   }
+});
+document.addEventListener('change', e => {
+  if(!e.target.matches('.vsel')) return;
+  S.voice[e.target.dataset.l] = e.target.value || null; save();
+  voiceTest(e.target.dataset.l);
 });
 document.addEventListener('keydown', e => {
   if(view === 'edit' && e.key === 'Enter' && e.target.id === 'pname'){ savePlayer(); return; }

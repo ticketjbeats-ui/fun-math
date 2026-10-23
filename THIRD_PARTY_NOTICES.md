@@ -65,3 +65,11 @@ SOFTWARE.```
 
 The sight word lists are the Dolch word lists (Edward William Dolch), a
 widely used list of common English words.
+
+## Kokoro voices
+
+The recorded voice clips in `audio/` were generated with the Kokoro-82M
+text-to-speech model (https://huggingface.co/hexgrad/Kokoro-82M), using the
+`af_heart` (English) and `ef_dora` (Spanish) voices, via kokoro-onnx
+(https://github.com/thewh1teagle/kokoro-onnx). Kokoro is released under the
+Apache License 2.0.
