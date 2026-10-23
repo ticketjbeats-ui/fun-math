@@ -207,6 +207,32 @@ main{max-width:760px;margin:0 auto;padding:4px 18px 40px}
 .newt{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 .newt span{background:var(--warn-bg);border:2px solid var(--edge);border-radius:12px;padding:6px 14px;font-size:19px;font-weight:600}
 
+/* stories */
+.reader{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.story{background-color:var(--card);background-image:linear-gradient(90deg,transparent 30px,var(--margin) 30px,var(--margin) 32px,transparent 32px);border:2px solid var(--edge);border-radius:18px;box-shadow:0 6px 0 var(--edge);padding:22px 22px 14px 50px;line-height:1.6}
+.story h1{font-size:clamp(26px,5vw,34px);line-height:1.2;margin-bottom:14px}
+.story h1 small{display:block;font-size:.6em;color:var(--grape);font-weight:600}
+.story p{margin:0 0 .8em}
+.g1 .story p{font-size:clamp(22px,4.6vw,27px)}
+.g5 .story p{font-size:clamp(18px,3.6vw,20px)}
+.story p.es{color:var(--grape);font-style:italic;margin-top:-.5em}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px}
+.chips span{background:var(--card);border:2px solid var(--edge);border-radius:999px;padding:4px 14px;font-size:18px}
+.chips b{color:var(--grape)}
+.quiz{display:flex;flex-direction:column;gap:18px}
+.qblock{background:var(--card);border:2px solid var(--edge);border-radius:16px;box-shadow:0 4px 0 var(--edge);padding:16px}
+.qq{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;font-size:21px;font-weight:600;margin-bottom:12px}
+.g1 .qq{font-size:24px}
+.say{flex:none;width:42px;height:42px;border-radius:10px;border:2px solid var(--edge);background:var(--paper);font-size:18px}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;min-height:52px;padding:10px 16px;border-radius:12px;border:2px solid var(--edge);box-shadow:0 3px 0 var(--edge);background:var(--paper);font-size:19px;font-weight:500}
+.g1 .opt{font-size:23px}
+.opt:active{transform:translateY(2px);box-shadow:0 1px 0 var(--edge)}
+.opt.right{background:var(--good-bg);outline:4px solid var(--mint);outline-offset:2px}
+.opt.wrong{background:var(--bad-bg);opacity:.55;box-shadow:none}
+.opt:disabled{cursor:default}
+.qfb{min-height:24px;margin-top:8px;font-weight:600;font-size:18px}
+
 /* results */
 .results{text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:10px}
 .big{font-size:clamp(80px,22vw,140px);font-weight:700;line-height:1;color:var(--sky)}
@@ -283,12 +309,15 @@ const TROPHIES = [
   {id:'allops', e:'🧮', name:'All-rounder',    desc:'Play with +, −, × and ÷',            test:p => OPS.every(([k]) => p.ops[k])},
   {id:'days3',  e:'📅', name:'Three days',     desc:'Play 3 days in a row',              test:p => p.days.streak >= 3},
   {id:'days7',  e:'🗓️', name:'Week warrior',   desc:'Play 7 days in a row',              test:p => p.days.streak >= 7},
+  {id:'book1',  e:'📖', name:'Bookworm',       desc:'Finish your first story',           test:p => Object.keys(p.reads).length >= 1},
+  {id:'book5',  e:'📚', name:'Story lover',    desc:'Finish 5 different stories',        test:p => Object.keys(p.reads).length >= 5},
+  {id:'bilingue',e:'🌎',name:'¡Bilingüe!',     desc:'Finish a story in Spanish',         test:p => Object.values(p.reads).some(r => r.es !== undefined || r.both !== undefined)},
   {id:'know25', e:'🧠', name:'Fact master',    desc:'Know 25 facts really well',         test:p => Object.values(p.facts).filter(f => f.r >= 2 && f.r/(f.r+f.w) >= .9).length >= 25}
 ];
 const PRAISE = ['Nice!','Yes!','You got it!','Boom!','Great job!','Correct!','Way to go!'];
 
 function newPlayer(name, emoji, level){
-  return {id:'p'+Math.random().toString(36).slice(2,9), name, emoji, level, stars:0, best:{}, facts:{}, trophies:{}, games:0, wins:0, ops:{}, days:{last:'', streak:0}};
+  return {id:'p'+Math.random().toString(36).slice(2,9), name, emoji, level, stars:0, best:{}, facts:{}, trophies:{}, games:0, wins:0, ops:{}, days:{last:'', streak:0}, reads:{}};
 }
 function load(){
   try{
@@ -299,7 +328,7 @@ function load(){
         d.players.forEach(p => {
           if(p.name === 'Player 1' || p.name === 'Ana') p.name = 'Anna'; else if(p.name === 'Player 2') p.name = 'Vanessa';
           p.trophies = p.trophies || {}; p.games = p.games || 0; p.wins = p.wins || 0; p.ops = p.ops || {};
-          p.days = p.days || {last:'', streak:0};
+          p.days = p.days || {last:'', streak:0}; p.reads = p.reads || {};
         });
         return d;
       }
@@ -354,7 +383,7 @@ function renderHome(){
       </div>`).join('')}
     ${S.players.length < 4 ? `<button class="add" data-act="add">+ Add a player</button>` : ''}
   </div>
-  <p class="foot">Stars and progress save on this device.</p>`;
+  <p class="foot">Math games and story time. Stars and progress save on this device.</p>`;
   renderHeader();
 }
 
@@ -411,9 +440,10 @@ function renderMenu(){
     sprint:`<button class="tile" style="--acc:var(--sky)" data-act="game" data-game="sprint"><span class="ti">⏱️</span><h2>Speed sprint</h2><p>Answer as many as you can in ${L.sprint} seconds.</p><span class="best">${best ? `Your best: ${best}` : 'Set your first best score'}</span></button>`,
     build: `<button class="tile" style="--acc:var(--mint)" data-act="game" data-game="build"><span class="ti">🧱</span><h2>Fact builder</h2><p>Practice the facts you miss most. No timer, with help when you need it.</p></button>`,
     map:   `<button class="tile" style="--acc:var(--sun)" data-act="map"><span class="ti">🗺️</span><h2>My facts</h2><p>See which facts you know and which need practice.</p></button>`,
+    read:  `<button class="tile" style="--acc:var(--mint)" data-act="read"><span class="ti">📖</span><h2>Story time</h2><p>Quick stories in English and Español, with questions and read-aloud.</p><span class="best">${Object.keys(p.reads).length ? `Stories read: ${Object.keys(p.reads).length}` : 'Read your first story'}</span></button>`,
     trophy:`<button class="tile" style="--acc:var(--grape)" data-act="trophies"><span class="ti">🏆</span><h2>Trophies</h2><p>${Object.keys(p.trophies).length} of ${TROPHIES.length} won. Can you get them all?</p></button>`
   };
-  const order = p.level === 'starter' ? ['pop','boss','build','sprint','map','trophy'] : ['sprint','boss','pop','build','map','trophy'];
+  const order = p.level === 'starter' ? ['pop','read','boss','build','sprint','map','trophy'] : ['sprint','boss','read','pop','build','map','trophy'];
   const today = dayStr(0), streakOn = p.days.last === today || p.days.last === dayStr(-1);
   $app.innerHTML = `
   <section class="menu-head"><span class="avatar big">${p.emoji}</span>
@@ -668,21 +698,29 @@ function finish(){
   if(G.won){ p.wins++; p.stars += 5; G.earned += 5; }
   p.games++;
   (G.op === 'mix' ? OPS.map(o => o[0]) : [G.op]).forEach(o => p.ops[o] = true);
-  const today = dayStr(0);
-  if(p.days.last !== today){ p.days.streak = p.days.last === dayStr(-1) ? p.days.streak + 1 : 1; p.days.last = today; }
-  G.newTrophies = TROPHIES.filter(t => !p.trophies[t.id] && t.test(p, G));
-  G.newTrophies.forEach(t => p.trophies[t.id] = true);
+  markDay(p);
+  G.newTrophies = awardTrophies(p, G);
   save(); sound('done');
   renderResults(newBest, prevBest);
   if(G.score > 0 && (G.type !== 'boss' || G.won)) confetti();
 }
+function markDay(p){
+  const today = dayStr(0);
+  if(p.days.last !== today){ p.days.streak = p.days.last === dayStr(-1) ? p.days.streak + 1 : 1; p.days.last = today; }
+}
+function awardTrophies(p, g){
+  const won = TROPHIES.filter(t => !p.trophies[t.id] && t.test(p, g));
+  won.forEach(t => p.trophies[t.id] = true);
+  return won;
+}
+const trophyHTML = list => list.length ? `<p class="sub">🏆 New trophy!</p><div class="newt">${list.map(t => `<span>${t.e} ${t.name}</span>`).join('')}</div>` : '';
 function dayStr(offset){
   const d = new Date(); d.setDate(d.getDate() + offset);
   return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
 }
 function renderResults(newBest, prevBest){
   view = 'results';
-  const trophies = G.newTrophies.length ? `<p class="sub">🏆 New trophy!</p><div class="newt">${G.newTrophies.map(t => `<span>${t.e} ${t.name}</span>`).join('')}</div>` : '';
+  const trophies = trophyHTML(G.newTrophies);
   if(G.type === 'boss'){
     $app.innerHTML = `
     <section class="results">
@@ -767,6 +805,324 @@ function renderMap(){
   renderHeader();
 }
 
+/* ---------- stories ---------- */
+// qs: [question, correct answer, ...wrong answers]
+const STORIES = [
+  {id:'max', grade:1, e:'🐶', vocab:[['dog','perro'],['ball','pelota'],['red','rojo'],['park','parque'],['happy','feliz']],
+   en:{title:'Max the Dog', text:[
+     'Max is a big brown dog. He likes to run in the park.',
+     'One day Max sees a red ball. He runs fast. He gets the ball!',
+     'Max brings the ball to Sam. Sam says, “Good dog, Max!” Max wags his tail. He is happy.'],
+     qs:[['What color is Max?','Brown','Black','White'],
+         ['What does Max find?','A red ball','A stick','A hat'],
+         ['How does Max feel at the end?','Happy','Sad','Mad']]},
+   es:{title:'Max el perro', text:[
+     'Max es un perro grande y café. Le gusta correr en el parque.',
+     'Un día Max ve una pelota roja. Corre rápido. ¡Agarra la pelota!',
+     'Max le lleva la pelota a Sam. Sam dice: —¡Buen perro, Max! Max mueve la cola. Está feliz.'],
+     qs:[['¿De qué color es Max?','Café','Negro','Blanco'],
+         ['¿Qué encuentra Max?','Una pelota roja','Un palo','Un sombrero'],
+         ['¿Cómo se siente Max al final?','Feliz','Triste','Enojado']]}},
+
+  {id:'seed', grade:1, e:'🌱', vocab:[['seed','semilla'],['water','agua'],['sun','sol'],['flower','flor'],['green','verde']],
+   en:{title:'The Little Seed', text:[
+     'Mia has a little seed. She puts it in the dirt. She gives it water every day. The sun is warm.',
+     'One day, Mia sees a tiny green leaf. The seed is growing!',
+     'Soon there is a tall yellow flower. Mia smiles. “I helped it grow,” she says.'],
+     qs:[['Where does Mia put the seed?','In the dirt','In a cup of milk','In her shoe'],
+         ['What does Mia give the seed every day?','Water','Candy','A book'],
+         ['What does the seed grow into?','A tall yellow flower','An apple tree','A red bug']]},
+   es:{title:'La semillita', text:[
+     'Mia tiene una semillita. La pone en la tierra. Le da agua todos los días. El sol está calientito.',
+     'Un día, Mia ve una hojita verde. ¡La semilla está creciendo!',
+     'Pronto hay una flor amarilla y alta. Mia sonríe. —Yo la ayudé a crecer —dice.'],
+     qs:[['¿Dónde pone Mia la semilla?','En la tierra','En un vaso de leche','En su zapato'],
+         ['¿Qué le da Mia a la semilla todos los días?','Agua','Dulces','Un libro'],
+         ['¿En qué se convierte la semilla?','En una flor amarilla y alta','En un árbol de manzanas','En un bicho rojo']]}},
+
+  {id:'rain', grade:1, e:'☔', vocab:[['rain','lluvia'],['mom','mamá'],['book','libro'],['chair','silla'],['fun','divertido']],
+   en:{title:'Rain Day', text:[
+     'It is raining. Leo can not play outside. He feels sad.',
+     'Then Mom has an idea. “Let’s make a fort!” They use blankets and chairs. Leo brings his books and a flashlight.',
+     'They read stories in the fort. Leo laughs. “Rain days are fun!” he says.'],
+     qs:[['Why can’t Leo play outside?','It is raining','He is sick','It is night'],
+         ['What do Leo and Mom make?','A fort','A cake','A kite'],
+         ['What do they do in the fort?','Read stories','Eat soup','Go to sleep']]},
+   es:{title:'Día de lluvia', text:[
+     'Está lloviendo. Leo no puede jugar afuera. Se siente triste.',
+     'Entonces Mamá tiene una idea. —¡Hagamos un fuerte! Usan cobijas y sillas. Leo trae sus libros y una linterna.',
+     'Leen cuentos en el fuerte. Leo se ríe. —¡Los días de lluvia son divertidos! —dice.'],
+     qs:[['¿Por qué Leo no puede jugar afuera?','Está lloviendo','Está enfermo','Es de noche'],
+         ['¿Qué hacen Leo y Mamá?','Un fuerte','Un pastel','Un papalote'],
+         ['¿Qué hacen en el fuerte?','Leen cuentos','Comen sopa','Se duermen']]}},
+
+  {id:'frog', grade:1, e:'🐸', vocab:[['frog','rana'],['fly','mosca'],['fish','pez'],['pond','estanque'],['nap','siesta']],
+   en:{title:'The Hungry Frog', text:[
+     'Fred is a green frog. He lives by a pond. Fred is hungry.',
+     'He sees a fly. Zap! His long tongue grabs the fly. Yum!',
+     'Then he sees a fish. The fish is too big. Fred hops away. He sits on a lily pad and takes a nap.'],
+     qs:[['Where does Fred live?','By a pond','In a tree','In a house'],
+         ['What does Fred eat?','A fly','A fish','A cookie'],
+         ['What does Fred do at the end?','Takes a nap','Swims away','Sings a song']]},
+   es:{title:'La rana hambrienta', text:[
+     'Fred es una rana verde. Vive junto a un estanque. Fred tiene hambre.',
+     'Ve una mosca. ¡Zas! Su lengua larga atrapa la mosca. ¡Qué rico!',
+     'Luego ve un pez. El pez es muy grande. Fred se va brincando. Se sienta en una hoja de nenúfar y toma una siesta.'],
+     qs:[['¿Dónde vive Fred?','Junto a un estanque','En un árbol','En una casa'],
+         ['¿Qué se come Fred?','Una mosca','Un pez','Una galleta'],
+         ['¿Qué hace Fred al final?','Toma una siesta','Se va nadando','Canta una canción']]}},
+
+  {id:'tower', grade:1, e:'🧱', vocab:[['friend','amigo'],['tower','torre'],['tall','alto'],['blocks','bloques'],['again','otra vez']],
+   en:{title:'Best Friends', text:[
+     'Lily and Ben are best friends. They like to build with blocks. Today they build a tall tower.',
+     'Oops! Ben bumps it. The tower falls down. Ben is sorry.',
+     'Lily says, “That is okay. We can build it again!” They build a new tower. It is even taller!'],
+     qs:[['What do Lily and Ben build?','A tower','A car','A boat'],
+         ['What happens to the tower?','It falls down','It turns blue','It flies away'],
+         ['What does Lily say?','We can build it again!','Go home!','I am mad!']]},
+   es:{title:'Mejores amigos', text:[
+     'Lily y Ben son mejores amigos. Les gusta construir con bloques. Hoy construyen una torre alta.',
+     '¡Ups! Ben choca con ella. La torre se cae. Ben lo siente.',
+     'Lily dice: —Está bien. ¡Podemos construirla otra vez! Construyen una torre nueva. ¡Es todavía más alta!'],
+     qs:[['¿Qué construyen Lily y Ben?','Una torre','Un carro','Un barco'],
+         ['¿Qué le pasa a la torre?','Se cae','Se pone azul','Sale volando'],
+         ['¿Qué dice Lily?','¡Podemos construirla otra vez!','¡Vete a casa!','¡Estoy enojada!']]}},
+
+  {id:'abuela', grade:1, e:'🫓', vocab:[['grandma','abuela'],['dough','masa'],['kitchen','cocina'],['hot','caliente'],['thank you','gracias']],
+   en:{title:'Cooking with Abuela', text:[
+     'Sofi goes to see her abuela. Abuela means grandma in Spanish. Today they make tortillas.',
+     'Sofi rolls the masa, or dough, into little balls. Abuela presses them flat. Then they cook them on a hot pan called a comal.',
+     'The kitchen smells so good! Sofi eats one with butter. “¡Gracias, Abuela!” she says. That means “Thank you, Grandma!”'],
+     qs:[['What does abuela mean?','Grandma','Sister','Teacher'],
+         ['What do Sofi and Abuela make?','Tortillas','Cookies','Pizza'],
+         ['What does Sofi say at the end?','¡Gracias, Abuela!','Good night!','I am cold.']]},
+   es:{title:'Cocinando con Abuela', text:[
+     'Sofi va a visitar a su abuela. Hoy hacen tortillas.',
+     'Sofi hace bolitas con la masa. Abuela las aplasta. Luego las cocinan en un comal caliente.',
+     '¡La cocina huele muy rico! Sofi se come una con mantequilla. —¡Gracias, Abuela! —dice.'],
+     qs:[['¿A quién va a visitar Sofi?','A su abuela','A su maestra','A su hermano'],
+         ['¿Qué hacen Sofi y Abuela?','Tortillas','Galletas','Pizza'],
+         ['¿Qué dice Sofi al final?','¡Gracias, Abuela!','¡Buenas noches!','Tengo frío.']]}},
+
+  {id:'volcano', grade:5, e:'🌋', vocab:[['science fair','feria de ciencias'],['judges','jueces'],['mistake','error'],['bubble','burbuja'],['award','premio']],
+   en:{title:'The Science Fair Surprise', text:[
+     'Priya had spent three weeks building a model volcano for the science fair. She had mixed the papier-mâché, painted the slopes a rocky gray, and tested her baking soda eruption twelve times in the garage. Every test had worked perfectly.',
+     'On the morning of the fair, Priya set up her table and waited for the judges. When they arrived, she poured the vinegar into the crater with a confident smile. Nothing happened. Not a single bubble.',
+     'Her face grew hot. Behind her, a few kids whispered. Priya took a deep breath and looked at her supplies. Then she noticed the label on the box: cornstarch, not baking soda. Both were white powders, and she had grabbed the wrong box from the kitchen.',
+     'Instead of giving up, Priya explained the mistake to the judges. She described how baking soda reacts with vinegar to make bubbles of carbon dioxide gas, and why cornstarch, which does not react with vinegar, just sat there like wet flour. The judges asked questions, and she answered every one.',
+     'Priya didn’t win first place. But she won the judges’ special award for scientific thinking, and she learned that understanding why something fails can be just as valuable as getting it right.'],
+     qs:[['Why didn’t the volcano erupt?','She used cornstarch instead of baking soda','The vinegar was too cold','The judges arrived too early','The crater was too small'],
+         ['What does “confident” most likely mean in this story?','Sure of herself','Nervous','Sleepy','Angry'],
+         ['“Her face grew hot.” How was Priya feeling?','Embarrassed','Bored','Proud','Excited'],
+         ['What is the main lesson of the story?','Learning from a mistake can be valuable','You must always win first place','Science is too hard','Never use vinegar']]},
+   es:{title:'La sorpresa de la feria de ciencias', text:[
+     'Priya había pasado tres semanas construyendo un volcán de modelo para la feria de ciencias. Había mezclado el papel maché, pintado las laderas de un gris rocoso y probado su erupción de bicarbonato doce veces en el garaje. Todas las pruebas habían funcionado perfectamente.',
+     'La mañana de la feria, Priya preparó su mesa y esperó a los jueces. Cuando llegaron, vertió el vinagre en el cráter con una sonrisa segura. No pasó nada. Ni una sola burbuja.',
+     'Se le puso la cara caliente. Detrás de ella, algunos niños susurraban. Priya respiró hondo y miró sus materiales. Entonces vio la etiqueta de la caja: maicena, no bicarbonato. Las dos eran polvos blancos, y había tomado la caja equivocada de la cocina.',
+     'En lugar de rendirse, Priya les explicó el error a los jueces. Describió cómo el bicarbonato reacciona con el vinagre para formar burbujas de dióxido de carbono, y por qué la maicena, que no reacciona con el vinagre, solo se quedó ahí como harina mojada. Los jueces le hicieron preguntas y ella las contestó todas.',
+     'Priya no ganó el primer lugar. Pero ganó el premio especial de los jueces por su pensamiento científico, y aprendió que entender por qué algo falla puede ser tan valioso como hacerlo bien.'],
+     qs:[['¿Por qué no hizo erupción el volcán?','Usó maicena en vez de bicarbonato','El vinagre estaba muy frío','Los jueces llegaron muy temprano','El cráter era muy pequeño'],
+         ['¿Qué significa “segura” en esta historia?','Confiada en sí misma','Nerviosa','Con sueño','Enojada'],
+         ['“Se le puso la cara caliente.” ¿Cómo se sentía Priya?','Avergonzada','Aburrida','Orgullosa','Emocionada'],
+         ['¿Cuál es la lección principal del cuento?','Aprender de un error puede ser valioso','Siempre hay que ganar el primer lugar','La ciencia es muy difícil','Nunca uses vinagre']]}},
+
+  {id:'lighthouse', grade:5, e:'🌊', vocab:[['lighthouse','faro'],['storm','tormenta'],['waves','olas'],['ship','barco'],['light','luz']],
+   en:{title:'Storm at Gull Rock', text:[
+     'In 1856, fourteen-year-old Nora lived with her family at the lighthouse on Gull Rock, a tiny island far off the coast. Her father kept the lamps burning so ships could find their way safely through the dark.',
+     'One January morning, her father rowed to the mainland to buy food and medicine. He promised to return the next day. That night, a fierce storm swept in. Waves crashed over the rocks, and the wind howled so loudly that Nora could barely hear her little sisters crying.',
+     'The storm lasted for four weeks. Her father could not row back through the giant waves. Every night, Nora climbed the winding stairs to the top of the tower, trimmed the wicks, and refilled the lamps with oil. Her arms ached and her eyes burned, but she never let the light go out.',
+     'When the sea finally calmed, her father’s boat appeared on the horizon. He had been terrified that the lighthouse would be dark. Instead, he saw its beam shining steadily, just as he had left it.',
+     'Years later, sailors still told the story of the girl who kept the light burning through the long storm.'],
+     qs:[['Why did Nora have to take care of the lighthouse?','Her father was stuck on the mainland because of the storm','Her father was tired of the job','Her sisters asked her to','The lamps were broken'],
+         ['What does “fierce” mean in this story?','Very strong and wild','Gentle and quiet','Warm and sunny','Very short'],
+         ['Which word best describes Nora?','Responsible','Lazy','Careless','Silly'],
+         ['What happened right after the sea calmed?','Her father’s boat appeared','The lamps went out','Nora slept for a week','A new storm started']]},
+   es:{title:'Tormenta en la Roca de las Gaviotas', text:[
+     'En 1856, Nora, de catorce años, vivía con su familia en el faro de la Roca de las Gaviotas, una islita muy lejos de la costa. Su papá mantenía las lámparas encendidas para que los barcos encontraran su camino en la oscuridad.',
+     'Una mañana de enero, su papá remó hasta tierra firme para comprar comida y medicinas. Prometió regresar al día siguiente. Esa noche llegó una tormenta feroz. Las olas chocaban contra las rocas y el viento aullaba tan fuerte que Nora apenas podía oír llorar a sus hermanitas.',
+     'La tormenta duró cuatro semanas. Su papá no podía regresar remando entre las olas gigantes. Cada noche, Nora subía la escalera de caracol hasta lo alto de la torre, recortaba las mechas y llenaba las lámparas de aceite. Le dolían los brazos y le ardían los ojos, pero nunca dejó que la luz se apagara.',
+     'Cuando por fin se calmó el mar, el bote de su papá apareció en el horizonte. Él tenía mucho miedo de que el faro estuviera apagado. En cambio, vio su luz brillando firme, tal como la había dejado.',
+     'Años después, los marineros todavía contaban la historia de la niña que mantuvo la luz encendida durante la larga tormenta.'],
+     qs:[['¿Por qué Nora tuvo que cuidar el faro?','Su papá no podía regresar por la tormenta','Su papá estaba cansado del trabajo','Sus hermanas se lo pidieron','Las lámparas estaban rotas'],
+         ['¿Qué significa “feroz” en esta historia?','Muy fuerte y salvaje','Suave y tranquila','Cálida y soleada','Muy corta'],
+         ['¿Qué palabra describe mejor a Nora?','Responsable','Perezosa','Descuidada','Tonta'],
+         ['¿Qué pasó justo después de que se calmó el mar?','Apareció el bote de su papá','Se apagaron las lámparas','Nora durmió una semana','Empezó otra tormenta']]}},
+
+  {id:'monarch', grade:5, e:'🦋', vocab:[['butterfly','mariposa'],['journey','viaje'],['forest','bosque'],['caterpillar','oruga'],['winter','invierno']],
+   en:{title:'The Monarch Mystery', text:[
+     'Every fall, millions of monarch butterflies do something amazing. They fly up to 3,000 miles from Canada and the United States to the mountains of central Mexico. No single butterfly has ever made the trip before, yet they find the same forests their great-great-grandparents visited.',
+     'How do they do it? Scientists believe monarchs use the sun as a compass. Special cells in their antennae work like a clock, helping them adjust for the sun’s position as it moves across the sky. Some research suggests they may also sense Earth’s magnetic field, especially on cloudy days.',
+     'When they arrive, the monarchs cluster together on oyamel fir trees. So many butterflies crowd onto a single branch that it can bend under their weight. They rest there all winter, staying cool but not freezing.',
+     'In spring, the monarchs head north again. Along the way they lay eggs on milkweed, the only plant their caterpillars can eat. It takes several generations to complete the trip back north.',
+     'Today, monarchs face danger because milkweed is disappearing. Many families, schools, and gardeners are now planting milkweed to help these tiny travelers on their incredible journey.'],
+     qs:[['What is the main idea of this article?','Monarchs make an amazing long journey every year','Butterflies like cold weather','Milkweed is a kind of tree','Scientists live in Mexico'],
+         ['What helps monarchs find their way?','The sun, and maybe Earth’s magnetic field','Maps','Other animals','The smell of the ocean'],
+         ['Why is milkweed so important?','It is the only plant monarch caterpillars can eat','It keeps the butterflies warm','It makes the branches bend','It tells them which way to fly'],
+         ['What does “cluster” mean in this article?','Gather close together','Fly away','Fall asleep','Change color']]},
+   es:{title:'El misterio de la monarca', text:[
+     'Cada otoño, millones de mariposas monarca hacen algo increíble. Vuelan hasta 5,000 kilómetros desde Canadá y los Estados Unidos hasta las montañas del centro de México. Ninguna de esas mariposas ha hecho el viaje antes, y aun así encuentran los mismos bosques que visitaron sus tatarabuelas.',
+     '¿Cómo lo hacen? Los científicos creen que las monarcas usan el sol como brújula. Unas células especiales en sus antenas funcionan como un reloj y les ayudan a ajustarse a la posición del sol mientras se mueve por el cielo. Algunas investigaciones sugieren que también podrían sentir el campo magnético de la Tierra, sobre todo en los días nublados.',
+     'Cuando llegan, las monarcas se agrupan en los árboles de oyamel. Tantas mariposas se amontonan en una sola rama que esta puede doblarse bajo su peso. Ahí descansan todo el invierno, frescas pero sin congelarse.',
+     'En la primavera, las monarcas vuelven al norte. En el camino ponen huevos en el algodoncillo, la única planta que pueden comer sus orugas. Se necesitan varias generaciones para completar el viaje de regreso.',
+     'Hoy, las monarcas están en peligro porque el algodoncillo está desapareciendo. Muchas familias, escuelas y jardineros ahora siembran algodoncillo para ayudar a estas pequeñas viajeras en su increíble viaje.'],
+     qs:[['¿Cuál es la idea principal de este artículo?','Las monarcas hacen un viaje largo e increíble cada año','A las mariposas les gusta el frío','El algodoncillo es un tipo de árbol','Los científicos viven en México'],
+         ['¿Qué ayuda a las monarcas a orientarse?','El sol, y tal vez el campo magnético de la Tierra','Los mapas','Otros animales','El olor del mar'],
+         ['¿Por qué es tan importante el algodoncillo?','Es la única planta que pueden comer sus orugas','Mantiene calientes a las mariposas','Hace que las ramas se doblen','Les dice hacia dónde volar'],
+         ['¿Qué significa “se agrupan” en este artículo?','Se juntan muy cerca','Se van volando','Se duermen','Cambian de color']]}},
+
+  {id:'newkid', grade:5, e:'🎒', vocab:[['friend','amigo'],['to draw','dibujar'],['school','escuela'],['lunch','almuerzo'],['to miss','extrañar']],
+   en:{title:'The New Kid', text:[
+     'On his first day at Lincoln Elementary, Mateo stood frozen in the cafeteria doorway, gripping his lunch tray. His family had moved from Puerto Rico two weeks earlier, and everything felt unfamiliar: the cold weather, the long hallways, and the fast English that swirled around him.',
+     'He spotted an empty seat at the end of a table and sat down quietly. A girl with a sketchbook looked up. “Hi, I’m Jada,” she said. “Do you like to draw?”',
+     'Mateo nodded. “Sí. I mean, yes.” He pulled a pencil from his backpack and sketched a coquí, the tiny frog that sings at night back home. Jada’s eyes widened. “That’s so cool! What is it?”',
+     '“A coquí,” Mateo explained. “It sings ko-KEE, ko-KEE. In Puerto Rico, you hear them everywhere.”',
+     'By the end of lunch, they had made a deal. Jada would help Mateo with English words, and Mateo would teach Jada Spanish. She learned that amigo means friend and that dibujar means to draw. He learned that “hang out” doesn’t mean hanging on anything.',
+     'A month later, the cafeteria didn’t feel so big anymore. Mateo still missed the coquís, but now he had someone to tell all about them.'],
+     qs:[['How did Mateo feel on his first day?','Nervous and out of place','Angry at Jada','Excited to show off','Bored'],
+         ['What helped Mateo and Jada become friends?','They both liked to draw','They lived on the same street','Their teacher made them sit together','They both had pet frogs'],
+         ['What is a coquí?','A tiny frog that sings at night','A kind of bread','A type of pencil','A dance'],
+         ['What does the last paragraph suggest?','Mateo feels less alone now','Mateo wants to move back right away','Jada is afraid of frogs','The cafeteria was rebuilt smaller']]},
+   es:{title:'El niño nuevo', text:[
+     'En su primer día en la escuela Lincoln, Mateo se quedó paralizado en la puerta de la cafetería, apretando su bandeja. Su familia se había mudado desde Puerto Rico dos semanas antes, y todo le parecía extraño: el clima frío, los pasillos largos y el inglés rápido que se oía por todas partes.',
+     'Vio un asiento vacío al final de una mesa y se sentó en silencio. Una niña con un cuaderno de dibujo levantó la mirada. —Hola, soy Jada —dijo—. ¿Te gusta dibujar?',
+     'Mateo asintió. —Sí. Digo, yes. —Sacó un lápiz de su mochila y dibujó un coquí, la ranita que canta de noche allá en su isla. A Jada se le abrieron los ojos. —¡Qué genial! ¿Qué es?',
+     '—Un coquí —explicó Mateo—. Canta «co-quí, co-quí». En Puerto Rico se oyen por todas partes.',
+     'Al terminar el almuerzo, ya habían hecho un trato. Jada ayudaría a Mateo con palabras en inglés, y Mateo le enseñaría español a Jada. Ella aprendió que friend se dice amigo y que to draw se dice dibujar. Él aprendió que hang out no significa colgarse de nada.',
+     'Un mes después, la cafetería ya no le parecía tan grande. Mateo todavía extrañaba a los coquís, pero ahora tenía a alguien a quien contarle todo sobre ellos.'],
+     qs:[['¿Cómo se sintió Mateo en su primer día?','Nervioso y fuera de lugar','Enojado con Jada','Emocionado por presumir','Aburrido'],
+         ['¿Qué ayudó a Mateo y a Jada a hacerse amigos?','A los dos les gustaba dibujar','Vivían en la misma calle','La maestra los sentó juntos','Los dos tenían ranas'],
+         ['¿Qué es un coquí?','Una ranita que canta de noche','Un tipo de pan','Un tipo de lápiz','Un baile'],
+         ['¿Qué sugiere el último párrafo?','Mateo ya se siente menos solo','Mateo quiere regresar enseguida','Jada les tiene miedo a las ranas','Hicieron más pequeña la cafetería']]}}
+];
+let storyGrade = 1, storyLang = 'en', R = null;
+const gradeFor = p => p.level === 'starter' || p.level === 'builder' ? 1 : 5;
+const canSpeak = 'speechSynthesis' in window;
+
+function renderStories(){
+  const p = cur(); if(!p) return renderHome();
+  endGame(); view = 'stories';
+  const list = STORIES.filter(s => s.grade === storyGrade);
+  const seg = (label, act, key, items, curv) => `<div class="seg" role="radiogroup" aria-label="${label}">${items.map(([k,t]) =>
+    `<button role="radio" aria-checked="${curv===k}" class="${curv===k?'on':''}" data-act="${act}" data-${key}="${k}">${t}</button>`).join('')}</div>`;
+  $app.innerHTML = `
+  <section class="menu-head"><span class="avatar big">📖</span><div><h1>Story time</h1>
+    <p class="sub">Read a short story, then answer questions about it. Every right answer on the first try earns a star.</p></div></section>
+  ${seg('Grade','sgrade','g',[[1,'1st grade'],[5,'5th grade']],storyGrade)}
+  ${seg('Language','slang','l',[['en','English'],['es','Español'],['both','Both · Los dos']],storyLang)}
+  <div class="games">${list.map(s => {
+    const T = storyLang === 'es' ? s.es : s.en, r = p.reads[s.id], n = T.qs.length;
+    const first = (T.text[0].match(/^.+?[.!?](?=\s|$)/) || [T.text[0]])[0];
+    return `<button class="tile" style="--acc:var(--${s.grade === 1 ? 'sky' : 'grape'})" data-act="story" data-id="${s.id}"><span class="ti">${s.e}</span>
+      <h2>${esc(T.title)}</h2><p>${esc(first)}</p>
+      <span class="best">${r ? `✓ Read · best ${Math.max(...Object.values(r))}/${n}${r.es !== undefined || r.both !== undefined ? ' · 🌎' : ''}` : 'New story'}</span></button>`;
+  }).join('')}</div>
+  <div class="row" style="justify-content:center;margin-top:20px"><button class="btn" data-act="menu">Back to games</button></div>`;
+  renderHeader();
+}
+
+function renderStory(id){
+  const p = cur(); if(!p) return renderHome();
+  const s = STORIES.find(x => x.id === id); if(!s) return renderStories();
+  endGame(); view = 'story';
+  const lang = storyLang, T = lang === 'es' ? s.es : s.en, es = lang === 'es';
+  R = {p, s, lang, T, first:T.qs.map(() => true), done:T.qs.map(() => false), score:0, finished:false};
+  const paras = lang === 'both'
+    ? s.en.text.map((t,i) => `<p>${esc(t)}</p><p class="es" lang="es">${esc(s.es.text[i])}</p>`).join('')
+    : T.text.map(t => `<p>${esc(t)}</p>`).join('');
+  $app.innerHTML = `
+  <div class="reader g${s.grade}">
+    <div class="game-top"><button class="link" data-act="stories">← ${es ? 'Todos los cuentos' : 'All stories'}</button>
+      ${canSpeak ? `<button class="btn" data-act="speak">🔊 ${es ? 'Léemelo' : 'Read to me'}</button>` : ''}</div>
+    <article class="story"${es ? ' lang="es"' : ''}>
+      <h1><span aria-hidden="true">${s.e}</span> ${esc(T.title)}${lang === 'both' ? `<small lang="es">${esc(s.es.title)}</small>` : ''}</h1>${paras}
+    </article>
+    <div class="vocab"><p class="vis-note">${{en:'Learn these words in Spanish', es:'Palabras en inglés', both:'Word bank · Palabras'}[lang]}</p>
+      <div class="chips">${s.vocab.map(([en,sp]) => es ? `<span><b>${esc(sp)}</b> = ${esc(en)}</span>` : `<span>${esc(en)} = <b lang="es">${esc(sp)}</b></span>`).join('')}</div></div>
+    <div class="nextrow" id="quizgo"><button class="btn go" data-act="quiz">${es ? '¡Ya lo leí! Ver preguntas' : 'I read it! Show the questions'}</button></div>
+    <div class="quiz" id="quiz" hidden${es ? ' lang="es"' : ''}>${T.qs.map((q,i) => `
+      <div class="qblock">
+        <p class="qq"><span>${i+1}. ${esc(q[0])}</span>${canSpeak ? `<button class="say" data-act="speakq" data-i="${i}" aria-label="${es ? 'Leer la pregunta' : 'Read the question aloud'}">🔊</button>` : ''}</p>
+        <div class="opts">${shuffle(q.slice(1).map((t,j) => [t, j === 0])).map(([t,ok]) =>
+          `<button class="opt" data-act="answer" data-i="${i}" data-ok="${ok ? 1 : 0}">${esc(t)}</button>`).join('')}</div>
+        <p class="qfb" aria-live="polite"></p>
+      </div>`).join('')}</div>
+    <div id="storyend"></div>
+  </div>`;
+  renderHeader();
+  window.scrollTo(0, 0);
+}
+function showQuiz(){
+  const quiz = $('#quiz'); if(!quiz) return;
+  quiz.hidden = false; $('#quizgo').remove();
+  quiz.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start'});
+}
+function answer(btn){
+  if(!R || R.finished) return;
+  const i = +btn.dataset.i; if(R.done[i]) return;
+  const block = btn.closest('.qblock'), fb = block.querySelector('.qfb'), es = R.lang === 'es';
+  if(btn.dataset.ok === '1'){
+    btn.classList.add('right'); R.done[i] = true;
+    block.querySelectorAll('.opt').forEach(b => { if(b !== btn) b.disabled = true; });
+    if(R.first[i]){ R.score++; R.p.stars++; }
+    fb.textContent = es ? '¡Correcto! 🎉' : PRAISE[ri(0, PRAISE.length-1)];
+    sound('good');
+  } else {
+    btn.classList.add('wrong'); btn.disabled = true; R.first[i] = false;
+    fb.textContent = es ? 'Casi. Busca la respuesta en el cuento.' : 'Not quite. Look back at the story and try again.';
+    sound('bad');
+  }
+  save(); renderHeader();
+  if(R.done.every(Boolean)) finishStory();
+}
+function finishStory(){
+  R.finished = true;
+  const {p, s, lang} = R, n = R.done.length, es = lang === 'es';
+  const r = p.reads[s.id] || (p.reads[s.id] = {});
+  r[lang] = Math.max(r[lang] || 0, R.score);
+  markDay(p);
+  const nt = awardTrophies(p, null);
+  save(); sound('done'); renderHeader();
+  if(R.score) confetti();
+  const other = es ? 'en' : 'es';
+  $('#storyend').innerHTML = `
+  <section class="results">
+    <div class="big">${R.score}<span style="font-size:.4em;color:var(--ink-soft)"> / ${n}</span></div>
+    <h1>${es ? 'correctas al primer intento' : 'right on the first try'}</h1>
+    <div class="statline"><div class="stat"><b>+${R.score} ⭐</b><span>${es ? 'estrellas ganadas' : 'stars earned'}</span></div></div>
+    ${trophyHTML(nt)}
+    <div class="row" style="justify-content:center;margin-top:8px">
+      <button class="btn go" data-act="stories">${es ? 'Leer otro cuento' : 'Read another story'}</button>
+      <button class="btn" data-act="story-lang" data-id="${s.id}" data-l="${other}">${other === 'es' ? '🌎 Read it in Español' : '🌎 Léelo en English'}</button>
+    </div>
+  </section>`;
+  $('#storyend').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'center'});
+}
+function hush(){ if(canSpeak) speechSynthesis.cancel(); }
+function say(parts){
+  if(!canSpeak) return;
+  hush();
+  for(const [t, l] of parts){
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = l === 'es' ? 'es-MX' : 'en-US';
+    u.rate = R && R.s.grade === 1 ? .85 : .95;
+    speechSynthesis.speak(u);
+  }
+}
+function speakStory(){
+  if(!R) return;
+  if(speechSynthesis.speaking){ hush(); return; }
+  const {s, lang} = R, parts = [];
+  if(lang === 'both'){ parts.push([s.en.title,'en'], [s.es.title,'es']); s.en.text.forEach((t,i) => parts.push([t,'en'], [s.es.text[i],'es'])); }
+  else { parts.push([R.T.title, lang]); R.T.text.forEach(t => parts.push([t, lang])); }
+  say(parts);
+}
+function speakQ(i){
+  if(!R) return;
+  const lang = R.lang === 'es' ? 'es' : 'en';
+  const opts = [...document.querySelectorAll(`.opt[data-i="${i}"]`)].map(b => b.textContent);
+  say([[R.T.qs[i][0], lang], ...opts.map(t => [t, lang])]);
+}
+
 /* ---------- trophies ---------- */
 function renderTrophies(){
   const p = cur(); if(!p) return renderHome();
@@ -814,9 +1170,19 @@ function confetti(){
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if(!b) return;
+  if(!b.dataset.act.startsWith('speak')) hush();
   switch(b.dataset.act){
     case 'home': renderHome(); break;
-    case 'pick': S.current = b.dataset.id; op = cur().level === 'starter' ? 'add' : 'mul'; save(); renderMenu(); break;
+    case 'pick': S.current = b.dataset.id; op = cur().level === 'starter' ? 'add' : 'mul'; storyGrade = gradeFor(cur()); save(); renderMenu(); break;
+    case 'read': case 'stories': renderStories(); break;
+    case 'sgrade': storyGrade = +b.dataset.g; renderStories(); break;
+    case 'slang': storyLang = b.dataset.l; renderStories(); break;
+    case 'story': renderStory(b.dataset.id); break;
+    case 'story-lang': storyLang = b.dataset.l; renderStory(b.dataset.id); break;
+    case 'quiz': showQuiz(); break;
+    case 'answer': answer(b); break;
+    case 'speak': speakStory(); break;
+    case 'speakq': speakQ(+b.dataset.i); break;
     case 'trophies': renderTrophies(); break;
     case 'edit': renderEdit(b.dataset.id); break;
     case 'add': renderEdit(null); break;
