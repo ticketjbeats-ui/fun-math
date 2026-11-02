@@ -3,11 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fun Math</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Fun Math · Free Math &amp; Reading Practice for Grades 1–5</title>
+<meta name="description" content="Free math and reading practice for kids in grades 1–5: addition, subtraction, multiplication and division facts, word problems, sight words, and short English–Spanish stories with comprehension questions. No ads, no sign-up, no data collected.">
+<meta name="keywords" content="math practice, math facts, multiplication, division, addition, subtraction, word problems, sight words, reading comprehension, Spanish for kids, bilingual stories, elementary school, grades 1-5, education">
+<meta name="rating" content="general">
+<meta name="theme-color" content="#FFC22E">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Fun Math · Free Math &amp; Reading Practice for Grades 1–5">
+<meta property="og:description" content="Free math and reading practice for kids in grades 1–5: addition, subtraction, multiplication and division facts, word problems, sight words, and short English–Spanish stories with comprehension questions. No ads, no sign-up, no data collected.">
+<meta property="og:image" content="icons/icon-512.png">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preload" href="fonts/fredoka.woff2" as="font" type="font/woff2" crossorigin>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": ["WebApplication", "LearningResource"],
+  "name": "Fun Math",
+  "description": "Free math and reading practice for kids in grades 1–5: addition, subtraction, multiplication and division facts, word problems, sight words, and short English–Spanish stories with comprehension questions. No ads, no sign-up, no data collected.",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Any web browser, including Chromebooks",
+  "isAccessibleForFree": true,
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+  "inLanguage": ["en", "es"],
+  "educationalLevel": ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"],
+  "typicalAgeRange": "6-11",
+  "audience": {"@type": "EducationalAudience", "educationalRole": "student"},
+  "learningResourceType": ["Practice", "Educational game", "Reading passage"],
+  "teaches": ["Addition and subtraction facts", "Multiplication and division facts", "Multi-digit arithmetic", "Math word problems", "Sight words", "Reading comprehension", "Spanish vocabulary"]
+}
+</script>
 <style>
+@font-face{font-family:"Fredoka";font-style:normal;font-weight:300 700;font-display:swap;src:url(fonts/fredoka.woff2) format("woff2-variations"),url(fonts/fredoka.woff2) format("woff2")}
 :root{
   --paper:#EAF2FB; --grid:#D6E4F4; --card:#FFFFFF; --ink:#1D2B53; --ink-soft:#4F5F86;
   --edge:#1D2B53; --rule:#C9DBF0; --margin:#FF8F86;
@@ -208,6 +237,19 @@ main{max-width:760px;margin:0 auto;padding:4px 18px 40px}
 .newt{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 .newt span{background:var(--warn-bg);border:2px solid var(--edge);border-radius:12px;padding:6px 14px;font-size:19px;font-weight:600}
 
+/* static intro (shown before the app starts) and site footer */
+.intro{max-width:640px;margin:0 auto;padding:10px 0 20px;font-size:18px;line-height:1.5}
+.intro h1{font-size:30px;margin-bottom:10px}
+.intro h2{font-size:22px;margin:18px 0 6px}
+.intro ul{margin:0;padding-left:22px}
+.intro a,.site-foot a{color:var(--ink)}
+.tagline{font-size:20px;font-weight:600;color:var(--ink-soft)}
+.site-foot{max-width:760px;margin:0 auto;padding:0 18px 32px;text-align:center;color:var(--ink-soft);font-size:15px;line-height:1.5}
+.site-foot p{margin:0 0 4px}
+.site-foot .link{font-size:15px;padding:0;color:var(--ink-soft)}
+.site-foot .links a{color:var(--ink-soft)}
+body[data-view="game"] .site-foot{display:none}
+
 /* menu sections */
 .sect{font-size:22px;font-weight:700;margin:28px 0 12px}
 .sect:first-of-type{margin-top:6px}
@@ -348,7 +390,31 @@ main{max-width:760px;margin:0 auto;padding:4px 18px 40px}
     <button id="snd" class="icon" data-act="sound"></button>
   </div>
 </header>
-<main id="app"></main>
+<main id="app">
+  <section class="intro">
+    <h1>Fun Math: free math and reading practice for grades 1–5</h1>
+    <p>Fun Math helps elementary students build math fact fluency and reading skills with short, friendly practice activities. It works in any web browser, including school Chromebooks. There are no ads and no sign-up, and no personal information is collected.</p>
+    <h2>Math practice</h2>
+    <ul>
+      <li>Addition and subtraction facts, from within 10 up to three-digit numbers</li>
+      <li>Multiplication and division facts up to 12 × 12, plus multi-digit problems like 34 × 6 and 96 ÷ 4</li>
+      <li>Word problems at four levels, with step-by-step solutions</li>
+      <li>A facts map that shows which facts a student knows and which need practice</li>
+    </ul>
+    <h2>Reading and Spanish</h2>
+    <ul>
+      <li>Short stories for 1st and 5th grade in English and Spanish, with comprehension questions</li>
+      <li>Sight word practice with the Dolch word lists</li>
+      <li>Spanish vocabulary with pictures and recorded audio</li>
+    </ul>
+    <p><a href="about.html">Information for teachers and parents</a> · <a href="privacy.html">Privacy</a></p>
+  </section>
+  <noscript><p class="intro">Fun Math needs JavaScript turned on to run the practice activities.</p></noscript>
+</main>
+<footer class="site-foot">
+  <p>Fun Math is free math and reading practice for grades 1–5. No ads, no accounts, and progress stays on this device.</p>
+  <p class="links"><a href="about.html">For teachers &amp; parents</a> · <a href="privacy.html">Privacy</a> · <a href="THIRD_PARTY_NOTICES.md">Credits</a> · <button class="link" data-act="voice">Voice settings</button> · <button class="link" data-act="share" id="sharebtn">📤 Share with a friend</button></p>
+</footer>
 
 <script>
 const LEVELS = {
@@ -420,6 +486,7 @@ const shuffle = arr => { for(let i=arr.length-1;i>0;i--){ const j=ri(0,i); [arr[
 /* ---------- header ---------- */
 function renderHeader(){
   const p = cur(), who = $('#who');
+  document.body.dataset.view = view;
   if(p && view !== 'home' && view !== 'edit'){
     who.hidden = false;
     who.innerHTML = `<span class="e">${p.emoji}</span><span>⭐ ${wallet(p)}</span>`;
@@ -438,6 +505,7 @@ function renderHome(){
   <section class="hero">
     <div class="hero-card" aria-hidden="true"><span>7</span><span class="sym">×</span><span>8</span><span class="sym">=</span>
       <span class="flip"><span class="a">?</span><span class="b">56</span></span></div>
+    <p class="tagline">Free math and reading practice for grades 1–5</p>
     <h1>Who’s playing?</h1>
   </section>
   <div class="players">
@@ -453,8 +521,7 @@ function renderHome(){
       </div>`).join('')}
     ${S.players.length < 4 ? `<button class="add" data-act="add">+ Add a player</button>` : ''}
   </div>
-  <p class="foot">Math games, story time and Spanish. Stars and progress save on this device.<br>
-    Word problems adapted from SVAMP and GSM8K (MIT License). Voices made with Kokoro. <a href="THIRD_PARTY_NOTICES.md">Credits</a> · <button class="link" data-act="voice" style="font-size:inherit;padding:0">Voice settings</button></p>`;
+  `;
   renderHeader();
 }
 
@@ -1308,6 +1375,17 @@ function renderVoice(){
   </div>`;
   renderHeader();
 }
+async function shareSite(btn){
+  const url = location.href.split('#')[0].split('?')[0];
+  const data = {title:'Fun Math', text:'Come practice math and reading with me on Fun Math!', url};
+  if(navigator.share){
+    try{ await navigator.share(data); return; }catch(e){ if(e.name === 'AbortError') return; }
+  }
+  const label = btn.textContent;
+  try{ await navigator.clipboard.writeText(url); btn.textContent = '✅ Link copied! Paste it to a friend.'; }
+  catch(e){ window.prompt('Copy this link and send it to a friend:', url); return; }
+  setTimeout(() => { btn.textContent = label; }, 2500);
+}
 function voiceTest(k){
   if(k === 'clip') say(VOICE_TESTS.clip);
   else say([[VOICE_TESTS.device[k], k]]);
@@ -1776,6 +1854,7 @@ document.addEventListener('click', e => {
     case 'speakw': say([[b.dataset.es, 'es'], [b.dataset.en, 'en']], .85); break;
     case 'hear': hearQ(); break;
     case 'voice': renderVoice(); break;
+    case 'share': shareSite(b); break;
     case 'vrate': S.rate = +b.dataset.r; save(); renderVoice(); voiceTest('clip'); break;
     case 'vtest': voiceTest(b.dataset.k); break;
     case 'shop': shopSel = null; renderShop(); break;

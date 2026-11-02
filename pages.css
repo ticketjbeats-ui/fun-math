@@ -1,0 +1,28 @@
+@font-face{font-family:"Fredoka";font-style:normal;font-weight:300 700;font-display:swap;src:url(fonts/fredoka.woff2) format("woff2-variations"),url(fonts/fredoka.woff2) format("woff2")}
+:root{--paper:#EAF2FB;--card:#FFFFFF;--ink:#1D2B53;--ink-soft:#4F5F86;--edge:#1D2B53;--rule:#C9DBF0;--sun:#FFC22E;--good-bg:#D9F5E6;color-scheme:light}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--paper:#13203B;--card:#1E2E52;--ink:#F3F6FF;--ink-soft:#AFBCDB;--edge:#070E20;--rule:#2A3E68;--good-bg:#15462F;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#13203B;--card:#1E2E52;--ink:#F3F6FF;--ink-soft:#AFBCDB;--edge:#070E20;--rule:#2A3E68;--good-bg:#15462F;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Fredoka","Nunito","Trebuchet MS",system-ui,sans-serif;font-size:18px;line-height:1.55}
+.wrap{max-width:760px;margin:0 auto;padding:16px 16px 48px}
+.top{display:flex;align-items:center;gap:12px;padding:6px 0 18px}
+.top img{width:44px;height:44px}
+.top a{color:var(--ink);font-weight:700;font-size:22px;text-decoration:none}
+.card{background:var(--card);border:2px solid var(--edge);border-radius:18px;box-shadow:0 5px 0 var(--edge);padding:22px 22px 14px;margin-bottom:22px}
+h1{font-size:clamp(28px,6vw,38px);line-height:1.2;margin:0 0 10px}
+h2{font-size:24px;margin:0 0 10px}
+h3{font-size:19px;margin:16px 0 4px}
+p,ul{margin:0 0 12px}
+ul{padding-left:22px}
+li{margin-bottom:4px}
+a{color:var(--ink)}
+.sub{color:var(--ink-soft)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:14px 0 6px}
+.facts div{background:var(--good-bg);border-radius:12px;padding:10px 14px;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:16px;margin-bottom:12px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:15px;color:var(--ink-soft)}
+code{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:1px 6px;font-size:16px}
+.btn{display:inline-block;background:var(--sun);color:#1D2B53;border:2px solid var(--edge);border-radius:14px;box-shadow:0 4px 0 var(--edge);padding:10px 20px;font-weight:700;text-decoration:none}
+.foot{text-align:center;color:var(--ink-soft);font-size:15px}
+.foot a{color:var(--ink-soft)}

@@ -1,0 +1,17 @@
+{
+  "name": "Fun Math · Math & Reading Practice",
+  "short_name": "Fun Math",
+  "description": "Free math and reading practice for kids in grades 1–5, with bilingual English–Spanish stories. No ads, no sign-up.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#EAF2FB",
+  "theme_color": "#FFC22E",
+  "lang": "en",
+  "categories": ["education", "kids"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml"}
+  ]
+}
