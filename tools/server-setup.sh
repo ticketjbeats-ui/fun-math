@@ -24,7 +24,10 @@ SERVER_IP=$(curl -s -4 --max-time 5 https://ifconfig.me || true)
 DNS_IP=$(getent ahostsv4 "$DOMAIN" | awk 'NR==1{print $1}')
 WWW_IP=$(getent ahostsv4 "www.$DOMAIN" | awk 'NR==1{print $1}')
 DOMAIN_OK=no
-if [ -z "$DNS_IP" ]; then bad "$DOMAIN doesn't point anywhere. At your domain company, add an A record: @ -> $SERVER_IP"
+CLOUDFLARE=no
+curl -sI --max-time 10 "http://$DOMAIN/" | grep -qi '^server: cloudflare' && CLOUDFLARE=yes
+if [ "$CLOUDFLARE" = yes ]; then ok "$DOMAIN goes through Cloudflare, which provides HTTPS"
+elif [ -z "$DNS_IP" ]; then bad "$DOMAIN doesn't point anywhere. At your domain company, add an A record: @ -> $SERVER_IP"
 elif [ "$DNS_IP" != "$SERVER_IP" ]; then bad "$DOMAIN points to $DNS_IP, but this server is $SERVER_IP. Change the A record to $SERVER_IP"
 else ok "$DOMAIN points to this server ($SERVER_IP)"; DOMAIN_OK=yes; fi
 NAMES="$DOMAIN"; [ "$WWW_IP" = "$SERVER_IP" ] && NAMES="$DOMAIN www.$DOMAIN"
@@ -45,7 +48,8 @@ fi
 if nginx -t -q 2>/dev/null; then ok "nginx config is valid"; else bad "nginx config has errors: run  nginx -t"; fi
 
 echo "5) HTTPS"
-if [ -d "/etc/letsencrypt/live/$DOMAIN" ]; then ok "certificate installed"
+if [ "$CLOUDFLARE" = yes ]; then ok "handled by Cloudflare (certbot not needed)"
+elif [ -d "/etc/letsencrypt/live/$DOMAIN" ]; then ok "certificate installed"
 elif [ "$DOMAIN_OK" = yes ]; then
   # Free Let's Encrypt certificate; renews automatically
   ARGS=(); for n in $NAMES; do ARGS+=(-d "$n"); done
@@ -57,4 +61,8 @@ echo "6) Pages"
 for f in "" about.html privacy.html robots.txt fonts/fredoka.woff2 icons/icon-192.png; do
   code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "https://$DOMAIN/$f")
   if [ "$code" = 200 ]; then ok "https://$DOMAIN/$f"; else bad "https://$DOMAIN/$f -> ${code/000/no answer}"; fi
+  case "$code" in 52[0-6]) note "Cloudflare can't reach this server: in Cloudflare, SSL/TLS -> set mode to Flexible";; esac
 done
+if curl -s --max-time 10 "https://$DOMAIN/" | grep -q 'class="site-foot"'; then ok "visitors get the newest version of the site"
+else bad "visitors get an old or different page (Cloudflare: Caching -> Purge Everything)"; fi
+if [ "$CLOUDFLARE" = yes ]; then note "In Cloudflare, keep Security -> Bots -> Bot Fight Mode OFF so school filters can read the site"; fi
