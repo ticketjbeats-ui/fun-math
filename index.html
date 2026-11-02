@@ -274,6 +274,49 @@ body[data-view="game"] .site-foot{display:none}
 .chips button{font:inherit;color:inherit;background:var(--card);border:2px solid var(--edge);border-radius:999px;padding:4px 14px;font-size:18px;box-shadow:0 2px 0 var(--edge)}
 .chips button b{color:var(--grape)}
 
+/* break it down */
+.ws{display:flex;flex-direction:column;gap:12px}
+.ws-head{font-size:22px;flex:1;text-align:center}
+.ws-methods{margin-bottom:0}
+.ws-title{text-align:center;font-size:clamp(34px,9vw,50px);font-weight:700}
+.ws-ans{color:var(--mint)}
+.ws-prompt{background:var(--card);border:2px solid var(--edge);border-radius:14px;box-shadow:0 3px 0 var(--edge);padding:12px 16px;font-size:20px;font-weight:600;line-height:1.35}
+.ws-hint{min-height:24px;font-size:18px;font-weight:500;color:var(--tomato)}
+.ws-sheet{display:flex;flex-direction:column;align-items:center;gap:14px;padding:18px 12px;overflow-x:auto;background-color:var(--card);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:20px 20px;border:2px solid var(--edge);border-radius:16px}
+.ws-line{font-size:26px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.wc{display:inline-flex;align-items:center;justify-content:center;min-width:1.2em;height:1.45em;padding:0 .12em;border-radius:8px;font-variant-numeric:tabular-nums}
+.wc.blank{border:2px dashed var(--ink-soft);opacity:.45}
+.wc.active{border:3px solid var(--sky);background:var(--warn-bg);color:var(--ink)}
+.wc.done{color:var(--mint)}
+.wc.shown{color:var(--tomato)}
+.ws-boxes{border-collapse:separate;border-spacing:6px;font-size:26px;font-weight:700}
+.ws-boxes th{padding:4px 10px;color:var(--ink-soft)}
+.ws-boxes td{min-width:90px;height:70px;text-align:center;border:2px solid var(--edge);border-radius:12px}
+.ws-boxes .tint0{background:rgba(31,123,234,.12)}.ws-boxes .tint1{background:rgba(22,153,94,.14)}.ws-boxes .tint2{background:rgba(101,68,232,.13)}
+.dg{display:grid;--cw:40px;row-gap:2px}
+.dgc{display:flex;align-items:center;justify-content:center;height:48px;font-size:30px;font-weight:700}
+.dgc .wc{width:34px;min-width:0;height:42px;padding:0}
+.dgc.carry{height:34px;font-size:20px;color:var(--tomato)}
+.dgc.carry .wc{height:30px;width:28px}
+.dgc.rule{border-bottom:3px solid var(--ink)}
+.dgc.roof{border-top:3px solid var(--ink)}
+.dgc.brk{border-right:3px solid var(--ink);border-radius:0 0 14px 0}
+.dgc.divisor{color:var(--grape)}
+.dgc.brought{color:var(--sky)}
+.ws-scratch{display:flex;flex-direction:column;gap:6px;align-items:center}
+.ws-scratch .ws-line{font-size:22px}
+.ws-pq{border-collapse:collapse;font-size:26px;font-weight:700}
+.ws-pq td,.ws-pq th{padding:4px 12px;text-align:right}
+.ws-pq th{font-size:16px;color:var(--ink-soft);border-left:3px solid var(--ink)}
+.ws-pq td:nth-child(2){border-left:3px solid var(--ink);color:var(--grape)}
+.ws-pq .lad{color:var(--ink)}
+.ws-pq .sub{border-top:3px solid var(--ink)}
+.ws-open{align-self:center}
+.modal{position:fixed;inset:0;z-index:40;display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:12px;background:rgba(10,20,40,.55)}
+.modal .sheet{width:100%;max-width:600px;margin:auto 0;padding:14px;background:var(--paper);border:2px solid var(--edge);border-radius:20px;box-shadow:0 8px 0 var(--edge);display:flex;flex-direction:column;gap:12px}
+.seg button:disabled{opacity:.4;cursor:not-allowed}
+
 /* sticker shop */
 .stickers{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:12px}
 .sticker{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;background:var(--card);border:2px solid var(--edge);border-radius:16px;box-shadow:0 4px 0 var(--edge)}
@@ -399,6 +442,7 @@ body[data-view="game"] .site-foot{display:none}
       <li>Addition and subtraction facts, from within 10 up to three-digit numbers</li>
       <li>Multiplication and division facts up to 12 × 12, plus multi-digit problems like 34 × 6 and 96 ÷ 4</li>
       <li>Word problems at four levels, with step-by-step solutions</li>
+      <li>Step-by-step big multiplication and division using the box method, the standard algorithm, long division and partial quotients</li>
       <li>A facts map that shows which facts a student knows and which need practice</li>
     </ul>
     <h2>Reading and Spanish</h2>
@@ -446,13 +490,14 @@ const TROPHIES = [
   {id:'sight40',e:'👀', name:'Sight word star', desc:'Read 40 different sight words',     test:p => factCount(p, 'sight:') >= 40},
   {id:'es30',   e:'🗣️', name:'¡Hablo español!', desc:'Learn 30 Spanish words',           test:p => factCount(p, 'es:') >= 30},
   {id:'sticker5',e:'🛍️',name:'Sticker collector', desc:'Collect 5 stickers',             test:p => Object.keys(p.stickers).length >= 5},
+  {id:'break5', e:'🧩', name:'Step by step',    desc:'Work out 5 big problems step by step', test:p => p.breaks >= 5},
   {id:'know25', e:'🧠', name:'Fact master',    desc:'Know 25 facts really well',         test:p => Object.values(p.facts).filter(f => f.r >= 2 && f.r/(f.r+f.w) >= .9).length >= 25}
 ];
 const factCount = (p, prefix) => Object.entries(p.facts).filter(([k,f]) => k.startsWith(prefix) && f.r > 0).length;
 const PRAISE = ['Nice!','Yes!','You got it!','Boom!','Great job!','Correct!','Way to go!'];
 
 function newPlayer(name, emoji, level){
-  return {id:'p'+Math.random().toString(36).slice(2,9), name, emoji, level, stars:0, best:{}, facts:{}, trophies:{}, games:0, wins:0, ops:{}, days:{last:'', streak:0}, reads:{}, stickers:{}, spent:0};
+  return {id:'p'+Math.random().toString(36).slice(2,9), name, emoji, level, stars:0, best:{}, facts:{}, trophies:{}, games:0, wins:0, ops:{}, days:{last:'', streak:0}, reads:{}, stickers:{}, spent:0, method:{mul:'box', div:'long'}, breaks:0};
 }
 function load(){
   try{
@@ -464,6 +509,7 @@ function load(){
           if(p.name === 'Player 1' || p.name === 'Ana') p.name = 'Anna'; else if(p.name === 'Player 2') p.name = 'Vanessa';
           p.trophies = p.trophies || {}; p.games = p.games || 0; p.wins = p.wins || 0; p.ops = p.ops || {};
           p.days = p.days || {last:'', streak:0}; p.reads = p.reads || {}; p.stickers = p.stickers || {}; p.spent = p.spent || 0;
+          p.method = p.method || {mul:'box', div:'long'}; p.breaks = p.breaks || 0;
         });
         return d;
       }
@@ -496,7 +542,10 @@ function renderHeader(){
   snd.textContent = S.sound ? '🔊' : '🔈';
   snd.setAttribute('aria-label', S.sound ? 'Turn sound off' : 'Turn sound on');
 }
-function endGame(){ if(G){ stopTimer(); G.done = true; } }
+function endGame(){
+  if(G){ stopTimer(); G.done = true; }
+  if(WS){ $('#wsmodal')?.remove(); WS = null; }
+}
 
 /* ---------- home ---------- */
 function renderHome(){
@@ -583,10 +632,11 @@ function renderMenu(){
     sight: `<button class="tile" style="--acc:var(--sun)" data-act="game" data-game="sight"><span class="ti">👀</span><h2>Sight words</h2><p>Listen to a word, then tap it. Great for new readers.</p></button>`,
     spanish:`<button class="tile" style="--acc:var(--tomato)" data-act="game" data-game="spanish"><span class="ti">🌎</span><h2>Spanish words</h2><p>Match pictures and Spanish words. ¡Vamos!</p><span class="best">${factCount(p,'es:') ? `Words learned: ${factCount(p,'es:')}` : 'Learn your first word'}</span></button>`,
     shop:  `<button class="tile" style="--acc:var(--mint)" data-act="shop"><span class="ti">🛍️</span><h2>Sticker shop</h2><p>Spend your stars on stickers and new buddies.</p><span class="best">⭐ ${wallet(p)} to spend</span></button>`,
+    break: `<button class="tile" style="--acc:var(--grape)" data-act="break"><span class="ti">🧩</span><h2>Break it down</h2><p>Solve big multiplication and division step by step, the way you learn in class.</p>${p.breaks ? `<span class="best">Problems worked out: ${p.breaks}</span>` : ''}</button>`,
     voice: `<button class="tile" style="--acc:var(--sky)" data-act="voice"><span class="ti">🗣️</span><h2>Voice settings</h2><p>Pick the talking voice and speed.</p></button>`,
     trophy:`<button class="tile" style="--acc:var(--grape)" data-act="trophies"><span class="ti">🏆</span><h2>Trophies</h2><p>${Object.keys(p.trophies).length} of ${TROPHIES.length} won. Can you get them all?</p></button>`
   };
-  const mathOrder = p.level === 'starter' ? ['pop','boss','build','word','sprint','map'] : ['sprint','boss','word','pop','build','map'];
+  const mathOrder = p.level === 'starter' ? ['pop','boss','build','word','break','sprint','map'] : ['sprint','boss','word','break','pop','build','map'];
   const readOrder = ['read','sight','spanish'];
   const grid = (keys, first) => `<div class="games">${keys.map((k,i) => first && i === 0 ? tiles[k].replace('class="tile"','class="tile first"').replace('<h2>','<span class="tag">Start here</span><h2>') : tiles[k]).join('')}</div>`;
   const today = dayStr(0), streakOn = p.days.last === today || p.days.last === dayStr(-1);
@@ -750,7 +800,7 @@ function nextQ(){
   $('#answer').className = 'answer';
   $('#feedback').textContent = '';
   $('#nextrow').innerHTML = '';
-  $('#visual').innerHTML = G.L.visual ? helpHTML(q, false) : '';
+  $('#visual').innerHTML = (G.L.visual ? helpHTML(q, false) : '') + wsButton(q);
   if(G.bubbles){
     $('#answer').textContent = '?';
     const txt = q.op === 'sight' || (q.op === 'spanish' && q.dir === 'pic') ? ' txt' : '';
@@ -816,7 +866,7 @@ function check(v){
   if(G.bubbles){
     $('#feedback').textContent = 'Not quite. Try another bubble.';
     if(q.op === 'sight') hearQ();
-    $('#visual').innerHTML = helpHTML(q, false) || helpHTML(q, true);
+    $('#visual').innerHTML = (helpHTML(q, false) || helpHTML(q, true)) + wsButton(q);
     return;
   }
   G.locked = true; G.n++;
@@ -824,10 +874,13 @@ function check(v){
   $('#feedback').textContent = q.op === 'word' ? `The answer is ${q.ans}.` : `${q.a} ${q.sym} ${q.b} = ${q.ans}`;
   if(G.type === 'sprint' || G.type === 'boss'){ setTimeout(nextQ, 1300); return; }
   if(G.type === 'build') G.queue.push({q, at: G.n + 2});
-  $('#visual').innerHTML = helpHTML(q, true);
+  $('#visual').innerHTML = helpHTML(q, true) + wsButton(q, true);
   G.awaitNext = true;
   $('#nextrow').innerHTML = `<button class="btn go" data-act="next">Got it, next one</button>`;
   $('#nextrow button').focus();
+}
+function wsButton(q, review){
+  return isBig(q) && G.type !== 'sprint' ? `<button class="btn ws-open" data-act="wsopen">🧩 ${review ? 'See it step by step' : 'Break it down'}</button>` : '';
 }
 function bump(cls){
   const m = $('#monster'); if(!m) return;
@@ -1755,6 +1808,273 @@ function setBuddy(e){
   p.emoji = e; save(); renderShop();
 }
 
+/* ---------- break it down: big multiplication and division, step by step ---------- */
+// Each method turns a problem into a plan: steps the student fills in one at a time,
+// plus what the layout needs to draw it the way it looks on paper in class.
+const PLACE = ['ones','tens','hundreds','thousands'];
+const METHODS = {mul:[['box','Box method'],['std','Standard way']], div:[['long','Long division'],['pq','Partial quotients']]};
+// Nonzero place-value parts, biggest first: 304 -> 300 and 4
+function pvParts(n){
+  const s = String(n);
+  return [...s].map((c, i) => ({d:+c, k:s.length - 1 - i})).filter(p => p.d).map(p => ({...p, v:p.d * 10 ** p.k}));
+}
+const andList = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+function timesHint(x, y){
+  const [px] = pvParts(x), [py] = pvParts(y), z = px.k + py.k;
+  return z ? `Think ${px.d} × ${py.d} = ${px.d * py.d}, then put ${z === 1 ? 'one zero' : z + ' zeros'} on the end.` : `Use your times tables: ${x} × ${y}.`;
+}
+const isBig = q => (q.op === 'mul' && Math.max(q.a, q.b) > 12) || (q.op === 'div' && q.ans > 12);
+
+function planBox(a, b){
+  const A = pvParts(a), B = pvParts(b), steps = [];
+  [[a, A, 'a'], [b, B, 'b']].forEach(([n, P, t]) => {
+    if(P.length < 2) return;
+    P.forEach((p, i) => steps.push({id:`${t}${i}`, val:p.v,
+      say: i ? `Now the ${PLACE[p.k]}. What are they worth?` : `Break ${n} into ${andList(P.map(q => PLACE[q.k]))}. What are the ${PLACE[p.k]} worth?`,
+      hint: p.k ? `The ${PLACE[p.k]} digit is ${p.d}. ${p.d} ${p.d === 1 ? PLACE[p.k].slice(0, -1) : PLACE[p.k]} ${p.d === 1 ? 'is' : 'are'} worth…?` : `The ones digit is ${p.d}.`}));
+  });
+  B.forEach((pb, r) => A.forEach((pa, c) => steps.push({id:`x${r}_${c}`, val:pa.v * pb.v, say:`Fill the box: ${pa.v} × ${pb.v}.`, hint:timesHint(pa.v, pb.v)})));
+  const prods = B.flatMap(pb => A.map(pa => pa.v * pb.v));
+  if(prods.length > 1) steps.push({id:'sum', val:a * b, say:`Add up the boxes: ${prods.join(' + ')}.`, hint:`Add two at a time. Start with ${prods[0]} + ${prods[1]}.`});
+  return {steps, A, B, prods};
+}
+// The standard algorithm for a many-digit number times a one-digit number, with carrying
+function planStd(a, b){
+  const ds = [...String(a)].map(Number).reverse(), steps = [];
+  let carry = 0;
+  ds.forEach((d, i) => {
+    const last = i === ds.length - 1, prod = d * b, tot = prod + carry, pl = PLACE[i];
+    steps.push({id:`m${i}`, val:prod, say:`Multiply the ${pl} digit: ${d} × ${b}.`, hint:`Use your times tables: ${d} × ${b}.`});
+    if(carry) steps.push({id:`t${i}`, val:tot, say:`Add the ${carry} you carried: ${prod} + ${carry}.`, hint:`Count up ${carry} from ${prod}.`});
+    if(last) steps.push({id:`w${i}`, val:tot, say:`That’s the last digit, so write all of ${tot} in the answer.`, hint:`Write the whole number ${tot}.`});
+    else{
+      steps.push({id:`w${i}`, val:tot % 10, say:`Write the ones digit of ${tot} in the ${pl} place.`, hint:`The ones digit is the last digit of ${tot}.`});
+      if(tot >= 10) steps.push({id:`c${i + 1}`, val:Math.floor(tot / 10), say:`Carry the tens digit of ${tot} to the top of the ${PLACE[i + 1]}.`, hint:`How many tens are in ${tot}?`});
+    }
+    carry = last ? 0 : Math.floor(tot / 10);
+  });
+  return {steps, ds};
+}
+// Long division: divide, multiply, subtract, bring down
+function planLong(D, d){
+  const s = String(D), steps = [], rows = [];
+  let pos = 0, cur = +s[0];
+  while(cur < d && pos < s.length - 1){ pos++; cur = cur * 10 + +s[pos]; }
+  let lead = pos > 0 ? `${d} doesn’t fit in ${s[0]}, so use ${cur}. ` : '';
+  for(;;){
+    const q = Math.floor(cur / d), m = q * d, r = cur - m;
+    steps.push({id:`q${pos}`, val:q, say:`${lead}How many ${d}s fit in ${cur}?`, hint:`Think: ${d} × what is ${cur} or a little less?`});
+    steps.push({id:`m${pos}`, val:m, say:`Multiply: ${q} × ${d}.`, hint:`Use your times tables: ${q} × ${d}.`});
+    steps.push({id:`r${pos}`, val:r, say:`Subtract: ${cur} − ${m}.`, hint:`Count up from ${m} to ${cur}.`});
+    rows.push({pos, cur, m, r});
+    if(pos >= s.length - 1) break;
+    pos++; cur = r * 10 + +s[pos]; lead = `Bring down the ${s[pos]} to make ${cur}. `;
+  }
+  return {steps, rows, s};
+}
+// Partial quotients: take away big friendly groups, then add up the groups
+function planPQ(D, d){
+  const steps = [], chunks = [], n = String(Math.floor(D / d)).length;
+  let R = D;
+  for(let k = n - 1; k >= 0; k--){
+    const unit = 10 ** k, g = Math.floor(R / (d * unit)) * unit;
+    if(!g) continue;
+    if(k) steps.push({id:`p${k}`, val:g * d, say:`Take away ${g} groups of ${d}. Multiply: ${g} × ${d}.`, hint:timesHint(g, d)});
+    else{
+      steps.push({id:`g${k}`, val:g, say:`How many ${d}s fit in ${R}?`, hint:`Think: ${d} × what is ${R} or a little less?`});
+      steps.push({id:`p${k}`, val:g * d, say:`Multiply: ${g} × ${d}.`, hint:`Use your times tables: ${g} × ${d}.`});
+    }
+    steps.push({id:`s${k}`, val:R - g * d, say:`Subtract: ${R} − ${g * d}.`, hint:`Count up from ${g * d} to ${R}.`});
+    chunks.push({k, g}); R -= g * d;
+  }
+  if(chunks.length > 1) steps.push({id:'sum', val:Math.floor(D / d), say:`Add up the groups: ${chunks.map(c => c.g).join(' + ')}.`, hint:`Add the groups one at a time.`});
+  return {steps, chunks};
+}
+
+let WS = null, brOp = 'mul';
+const reached = (ws, id) => ws.byId[id] && ws.byId[id].idx <= ws.i;
+// One answer box (box method, partial quotients, scratch lines)
+function cellHTML(ws, id){
+  const len = String(ws.byId[id].val).length, v = ws.vals[id];
+  if(v !== undefined) return `<span class="wc ${ws.revealed.has(id) ? 'shown' : 'done'}">${v}</span>`;
+  const active = ws.cur && ws.cur.id === id;
+  return `<span class="wc ${active ? 'active' : 'blank'}" style="min-width:${len * .62 + .5}em">${active && ws.input ? ws.input : '&nbsp;'}</span>`;
+}
+// One digit per column, lined up by place value (standard way, long division)
+function entryCells(ws, id, endCol, extra = ''){
+  const len = String(ws.byId[id].val).length, v = ws.vals[id], active = ws.cur && ws.cur.id === id;
+  const s = v !== undefined ? String(v) : active ? ws.input : '';
+  const cls = v !== undefined ? (ws.revealed.has(id) ? 'shown' : 'done') : active ? 'active' : 'blank';
+  const out = [];
+  for(let j = 0; j < len; j++) out.push([endCol - (len - 1 - j), `<span class="wc ${cls}">${s[j - (len - s.length)] ?? '&nbsp;'}</span>`, extra]);
+  return out;
+}
+function digitGrid(C, rows){
+  return `<div class="dg" style="grid-template-columns:repeat(${C},var(--cw))">${rows.map(r => {
+    const cells = Array.from({length:C}, () => ['', '']);
+    r.cells.forEach(([c, h, x]) => { if(c >= 0 && c < C) cells[c] = [h, x || '']; });
+    return cells.map(([h, x]) => `<span class="dgc ${r.cls || ''} ${x}">${h}</span>`).join('');
+  }).join('')}</div>`;
+}
+function renderBox(ws){
+  const {A, B, prods} = ws.plan;
+  const head = (P, t, i) => P.length < 2 ? P[0].v : ws.vals[`${t}${i}`] ?? '?';
+  const split = (n, P, t) => P.length < 2 ? '' : `<div class="ws-line">${n} = ${P.map((_, i) => cellHTML(ws, `${t}${i}`)).join(' + ')}</div>`;
+  return `${split(ws.a, A, 'a')}${split(ws.b, B, 'b')}
+    <table class="ws-boxes"><tr><th>×</th>${A.map((_, c) => `<th>${head(A, 'a', c)}</th>`).join('')}</tr>
+    ${B.map((_, r) => `<tr><th>${head(B, 'b', r)}</th>${A.map((_, c) => `<td class="tint${c % 3}">${cellHTML(ws, `x${r}_${c}`)}</td>`).join('')}</tr>`).join('')}</table>
+    ${prods.length > 1 ? `<div class="ws-line">${prods.map((v, i) => { const id = `x${Math.floor(i / A.length)}_${i % A.length}`; return ws.vals[id] !== undefined ? v : '?'; }).join(' + ')} = ${cellHTML(ws, 'sum')}</div>` : ''}`;
+}
+function renderStd(ws){
+  const {ds} = ws.plan, C = String(ws.a * ws.b).length + 1, col = i => C - 1 - i;
+  const rows = [
+    {cls:'carry', cells:ds.flatMap((_, i) => reached(ws, `c${i}`) ? entryCells(ws, `c${i}`, col(i)) : [])},
+    {cells:ds.map((d, i) => [col(i), d])},
+    {cls:'rule', cells:[[0, '×'], [col(0), ws.b]]},
+    {cells:ds.flatMap((_, i) => entryCells(ws, `w${i}`, col(i)))}
+  ];
+  const work = ds.map((d, i) => {
+    if(!reached(ws, `m${i}`)) return '';
+    const t = ws.byId[`t${i}`];
+    return `<div class="ws-line">${d} × ${ws.b} = ${cellHTML(ws, `m${i}`)}${t && reached(ws, `t${i}`) ? ` → ${ws.vals[`m${i}`]} + ${ws.byId[`c${i}`].val} = ${cellHTML(ws, `t${i}`)}` : ''}</div>`;
+  }).join('');
+  return digitGrid(C, rows) + `<div class="ws-scratch">${work}</div>`;
+}
+function renderLong(ws){
+  const {rows:R, s} = ws.plan, C = s.length + 2, col = pos => pos + 2;
+  const rows = [
+    {cells:R.flatMap(r => entryCells(ws, `q${r.pos}`, col(r.pos)))},
+    {cells:[[0, ws.b, 'divisor'], [1, '', 'brk'], ...[...s].map((c, i) => [col(i), c, 'roof'])]}
+  ];
+  R.forEach((r, j) => {
+    if(!reached(ws, `m${r.pos}`)) return;
+    rows.push({cells:[[col(r.pos) - String(r.m).length, '−'], ...entryCells(ws, `m${r.pos}`, col(r.pos), 'rule')]});
+    if(!reached(ws, `r${r.pos}`)) return;
+    const next = R[j + 1];
+    rows.push({cells:[...entryCells(ws, `r${r.pos}`, col(r.pos)), ...(next && ws.vals[`r${r.pos}`] !== undefined ? [[col(next.pos), s[next.pos], 'brought']] : [])]});
+  });
+  return digitGrid(C, rows);
+}
+function renderPQ(ws){
+  let html = `<table class="ws-pq"><tr><td class="lad">${ws.b} ) ${ws.a}</td><th>groups</th></tr>`;
+  ws.plan.chunks.forEach(c => {
+    const g = `g${c.k}`, p = `p${c.k}`, s = `s${c.k}`;
+    if(!reached(ws, ws.byId[g] ? g : p)) return;
+    html += `<tr><td>− ${cellHTML(ws, p)}</td><td>${ws.byId[g] ? cellHTML(ws, g) : c.g}</td></tr>`;
+    if(reached(ws, s)) html += `<tr><td class="sub">${cellHTML(ws, s)}</td><td></td></tr>`;
+  });
+  if(reached(ws, 'sum')) html += `<tr><td></td><td class="sub">${cellHTML(ws, 'sum')}</td></tr>`;
+  return html + '</table>';
+}
+const canStd = (a, b) => Math.min(a, b) < 10;
+const methodSeg = (o, m, std = true) => `<div class="seg ws-methods" role="radiogroup" aria-label="Method">${METHODS[o].map(([k, t]) =>
+  `<button role="radio" aria-checked="${m === k}" class="${m === k ? 'on' : ''}" data-act="wsmethod" data-m="${k}"${k === 'std' && !std ? ' disabled title="The standard way here is for a one-digit number"' : ''}>${t}</button>`).join('')}</div>`;
+
+function startWS(el, o){
+  let {op:wop, a, b, method} = o;
+  if(wop === 'mul' && a < b) [a, b] = [b, a];
+  if(wop === 'mul' && method === 'std' && !canStd(a, b)) method = 'box';
+  const plan = wop === 'mul' ? (method === 'box' ? planBox(a, b) : planStd(a, b)) : (method === 'long' ? planLong(a, b) : planPQ(a, b));
+  const byId = {}; plan.steps.forEach((st, idx) => { byId[st.id] = {...st, idx}; });
+  WS = {...o, el, a, b, method, plan, byId, i:0, input:'', vals:{}, revealed:new Set(), misses:0, slips:0, mistakes:0, done:false, hint:''};
+  drawWS();
+}
+function drawWS(){
+  const ws = WS; ws.cur = ws.plan.steps[ws.i];
+  const sym = ws.op === 'mul' ? '×' : '÷', ans = ws.op === 'mul' ? ws.a * ws.b : ws.a / ws.b;
+  const body = {box:renderBox, std:renderStd, long:renderLong, pq:renderPQ}[ws.method](ws);
+  ws.el.innerHTML = `
+    <div class="ws-title">${ws.a} ${sym} ${ws.b} = ${ws.done ? `<span class="ws-ans">${ans}</span>` : '?'}</div>
+    <div class="ws-prompt" aria-live="polite">${ws.done ? `🎉 You did it! ${ws.a} ${sym} ${ws.b} = ${ans}. ${ws.slips ? '' : 'No mistakes! '}+${ws.stars} ⭐` : esc(ws.cur.say)}</div>
+    <div class="ws-hint">${esc(ws.hint)}</div>
+    <div class="ws-sheet">${body}</div>
+    ${ws.done ? `${trophyHTML(ws.trophies)}<div class="row" style="justify-content:center">${ws.modal
+        ? `<button class="btn go" data-act="wsclose">${ws.pending ? 'Use this answer' : 'Back to the game'}</button>`
+        : `<button class="btn go" data-act="break-next">Next problem</button><button class="btn" data-act="menu">Pick a game</button>`}</div>`
+      : `<div class="pad">${[1,2,3,4,5,6,7,8,9].map(n => `<button class="key" data-act="wkey" data-k="${n}">${n}</button>`).join('')}
+      <button class="key back" data-act="wkey" data-k="back" aria-label="Delete">⌫</button>
+      <button class="key" data-act="wkey" data-k="0">0</button>
+      <button class="key ok" data-act="wkey" data-k="ok" aria-label="Check">✓</button></div>`}`;
+}
+function wsPress(k){
+  const ws = WS; if(!ws || ws.done) return;
+  if(k === 'back'){ ws.input = ws.input.slice(0, -1); return drawWS(); }
+  if(k === 'ok'){ if(ws.input) wsCheck(); return; }
+  const len = String(ws.cur.val).length;
+  if(ws.input.length >= len) return;
+  ws.input += k; drawWS();
+  if(ws.input.length >= len) wsCheck();
+}
+function wsCheck(){
+  const ws = WS, st = ws.cur;
+  if(Number(ws.input) === st.val){ ws.vals[st.id] = st.val; sound('step'); return wsAdvance(); }
+  ws.misses++; ws.slips++; sound('bad');
+  if(ws.misses === 1){ ws.hint = `Not quite. ${st.hint}`; ws.input = ''; drawWS(); }
+  else{ ws.vals[st.id] = st.val; ws.revealed.add(st.id); ws.mistakes++; ws.hint = `It’s ${st.val}. Let’s keep going!`; wsAdvance(true); }
+}
+function wsAdvance(keepHint){
+  const ws = WS;
+  ws.i++; ws.input = ''; ws.misses = 0;
+  if(!keepHint) ws.hint = '';
+  if(ws.i < ws.plan.steps.length) return drawWS();
+  ws.done = true; ws.hint = '';
+  const p = cur();
+  ws.stars = ws.modal || ws.mistakes ? 1 : 2;
+  if(p){ p.stars += ws.stars; p.breaks = (p.breaks || 0) + 1; markDay(p); ws.trophies = awardTrophies(p, null); save(); }
+  ws.trophies = ws.trophies || [];
+  drawWS(); renderHeader(); sound('good'); boom($('.ws-ans'));
+}
+function wsProblem(level, o, m){
+  if(o === 'mul'){
+    if(level === 'challenge') return m === 'box' && Math.random() < .5 ? [ri(12, 49), ri(12, 29)] : [ri(102, 489), ri(3, 9)];
+    if(level === 'pro') return [ri(13, 99), ri(3, 9)];
+    return [ri(12, 39), ri(2, 5)];
+  }
+  const d = level === 'starter' || level === 'builder' ? ri(2, 5) : ri(3, 9);
+  const q = level === 'challenge' ? ri(102, 199) : level === 'pro' ? ri(12, 99) : ri(11, 19);
+  return [q * d, d];
+}
+function renderBreak(){
+  const p = cur(); if(!p) return renderHome();
+  endGame(); view = 'break';
+  const m = p.method[brOp], [a, b] = wsProblem(p.level, brOp, m);
+  $app.innerHTML = `
+  <div class="game kind-break">
+    <div class="game-top"><button class="link" data-act="menu">Back</button><h1 class="ws-head">🧩 Break it down</h1><button class="icon sm" data-act="wsay" aria-label="Read this step to me">🔊</button></div>
+    <div class="seg" role="radiogroup" aria-label="Operation">${[['mul','× Multiply'],['div','÷ Divide']].map(([k, t]) =>
+      `<button role="radio" aria-checked="${brOp === k}" class="${brOp === k ? 'on' : ''}" data-act="brop" data-op="${k}">${t}</button>`).join('')}</div>
+    ${methodSeg(brOp, m)}
+    <div id="ws" class="ws"></div>
+  </div>`;
+  startWS($('#ws'), {op:brOp, a, b, method:m, modal:false});
+  renderHeader();
+}
+// From a math game: work the current question out on "scratch paper"
+function openWS(){
+  if(!G || !G.q || !isBig(G.q) || WS) return;
+  const q = G.q, m = G.p.method[q.op], box = document.createElement('div');
+  box.className = 'modal'; box.id = 'wsmodal';
+  box.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="Break it down">
+    <div class="game-top"><button class="link" data-act="wsclose">Close</button><b>🧩 Break it down</b><button class="icon sm" data-act="wsay" aria-label="Read this step to me">🔊</button></div>
+    ${methodSeg(q.op, m, q.op !== 'mul' || canStd(q.a, q.b))}<div id="ws" class="ws"></div></div>`;
+  document.body.appendChild(box);
+  startWS($('#ws'), {op:q.op, a:q.a, b:q.b, method:m, modal:true, gameQ:q, pending:!G.locked});
+}
+function closeWS(){
+  const ws = WS;
+  $('#wsmodal')?.remove(); WS = null;
+  // Working it out counts as answering the question
+  if(ws && ws.done && ws.pending && G && !G.done && !G.locked && G.q === ws.gameQ) check(G.q.ans);
+}
+function wsSetMethod(m){
+  const p = cur(); if(!p || !WS) return;
+  p.method[WS.op] = m; save();
+  if(!WS.modal) return renderBreak();
+  document.querySelectorAll('[data-act=wsmethod]').forEach(x => { const on = x.dataset.m === m; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); });
+  startWS($('#ws'), {op:WS.op, a:WS.a, b:WS.b, method:m, modal:true, gameQ:WS.gameQ, pending:WS.pending});
+}
+const speakable = t => t.replace(/×/g, ' times ').replace(/÷/g, ' divided by ').replace(/−/g, ' minus ').replace(/\+/g, ' plus ');
+
 /* ---------- trophies ---------- */
 function renderTrophies(){
   const p = cur(); if(!p) return renderHome();
@@ -1774,7 +2094,7 @@ function sound(type){
   try{
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
     if(type === 'good') return horn();
-    const seq = {good:[[660,.08],[880,.13]], bad:[[196,.22]], done:[[523,.1],[659,.1],[784,.1],[1047,.25]]}[type];
+    const seq = {step:[[784,.06],[988,.09]], good:[[660,.08],[880,.13]], bad:[[196,.22]], done:[[523,.1],[659,.1],[784,.1],[1047,.25]]}[type];
     let t = ac.currentTime;
     for(const [f,d] of seq){
       const o = ac.createOscillator(), g = ac.createGain();
@@ -1858,6 +2178,14 @@ document.addEventListener('click', e => {
     case 'vrate': S.rate = +b.dataset.r; save(); renderVoice(); voiceTest('clip'); break;
     case 'vtest': voiceTest(b.dataset.k); break;
     case 'shop': shopSel = null; renderShop(); break;
+    case 'break': brOp = op === 'div' ? 'div' : 'mul'; renderBreak(); break;
+    case 'brop': brOp = b.dataset.op; renderBreak(); break;
+    case 'break-next': renderBreak(); break;
+    case 'wkey': wsPress(b.dataset.k); break;
+    case 'wsmethod': wsSetMethod(b.dataset.m); break;
+    case 'wsopen': openWS(); break;
+    case 'wsclose': closeWS(); break;
+    case 'wsay': if(WS && WS.cur && !WS.done) say([[speakable(WS.cur.say), 'en']], .9); break;
     case 'pick-sticker': shopSel = b.dataset.e; renderShop(); break;
     case 'buy': buySticker(b.dataset.e); break;
     case 'buddy': setBuddy(b.dataset.e); break;
@@ -1887,6 +2215,13 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('keydown', e => {
   if(view === 'edit' && e.key === 'Enter' && e.target.id === 'pname'){ savePlayer(); return; }
+  if(WS && (WS.modal || view === 'break') && !e.metaKey && !e.ctrlKey){
+    if(/^[0-9]$/.test(e.key)) wsPress(e.key);
+    else if(e.key === 'Backspace'){ e.preventDefault(); wsPress('back'); }
+    else if(e.key === 'Enter'){ e.preventDefault(); if(!WS.done) wsPress('ok'); else if(WS.modal) closeWS(); else renderBreak(); }
+    else if(e.key === 'Escape' && WS.modal) closeWS();
+    return;
+  }
   if(view !== 'game' || !G || e.metaKey || e.ctrlKey) return;
   if(/^[0-9]$/.test(e.key)) press(e.key);
   else if(e.key === 'Backspace'){ e.preventDefault(); press('back'); }
